@@ -1,3 +1,21 @@
 # Created by .ignore support plugin (hsz.mobi)
 /log
 .idea
+.idea/GrepConsole.xml
+.idea/dictionaries/
+.idea/inspectionProfiles/
+.idea/markdown-navigator/
+.idea/misc.xml
+.idea/modules.xml
+.idea/seiral.iml
+.idea/workspace.xml
+Temp_Hum_Data.py
+__pycache__/
+constants.py
+main.py
+mt_app_handler.py
+mt_msg.py
+mt_sys_handler.py
+my_logger.py
+test.py
+utils.py
