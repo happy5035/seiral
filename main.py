@@ -51,7 +51,6 @@ def sop_state(ser):
     if ch == MT_UART_SOF:
         timer = threading.Timer(1, timeout_timer)
         state = LEN_STATE
-        logger.debug('read uart sof %02x' % ch)
 
 
 def len_state(ser):
@@ -63,7 +62,6 @@ def len_state(ser):
     len_token = ch
     msg['len'] = len_token
     state = CMD_STATE1
-    logger.debug('len state %d' % ch)
 
 
 def cmd_state1(ser):
@@ -74,7 +72,6 @@ def cmd_state1(ser):
     ch = int().from_bytes(ch, 'big')
     msg['cmd_state1'] = ch
     state = CMD_STATE2
-    logger.debug('cmd state1 %02x' % ch)
 
 
 def cmd_state2(ser):
@@ -88,7 +85,6 @@ def cmd_state2(ser):
         state = FCS_STATE
     else:
         state = DATA_STATE
-    logger.debug('cmd state2 %02x' % ch)
 
 
 def data_state(ser):
@@ -100,7 +96,6 @@ def data_state(ser):
     msg['data'] += chs
     if msg['len'] == len(msg['data']):
         state = FCS_STATE
-    logger.debug('data state %s' % chs.hex())
 
 
 def cal_fcs():
@@ -119,14 +114,14 @@ def fcs_state(ser):
     if len(ch) == 0:
         return
     ch = int().from_bytes(ch, 'big')
-    logger.debug('fcs %02x' % ch)
     fcs_token = cal_fcs()
     if fcs_token == ch:
         mt_msg = Msg(msg)
         msg_queue.put(mt_msg)
+        logger.debug(mt_msg)
         logger.debug('fcs success')
     else:
-        logger.debug('fcs failed')
+        logger.info('fcs failed')
     state = SOP_STATE
     init_msg()
     timer.cancel()
