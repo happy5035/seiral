@@ -9,13 +9,3 @@
 .idea/modules.xml
 .idea/seiral.iml
 .idea/workspace.xml
-Temp_Hum_Data.py
-__pycache__/
-constants.py
-main.py
-mt_app_handler.py
-mt_msg.py
-mt_sys_handler.py
-my_logger.py
-test.py
-utils.py
