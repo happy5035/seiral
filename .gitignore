@@ -1,11 +1,4 @@
 # Created by .ignore support plugin (hsz.mobi)
 /log
 .idea
-.idea/GrepConsole.xml
-.idea/dictionaries/
-.idea/inspectionProfiles/
-.idea/markdown-navigator/
-.idea/misc.xml
-.idea/modules.xml
-.idea/seiral.iml
-.idea/workspace.xml
+test*
