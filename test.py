@@ -1,14 +1,37 @@
-# -*- coding: utf-8 -*-
-import datetime
+import os
+import sys
+from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy import create_engine
 
-s = 'b0efaa21'
-re_s = ''
-for i in range(len(s), 0, -2):
-    re_s += s[i - 2:i]
-print(re_s)
-bytes_s = bytes().fromhex(re_s)
-result = int().from_bytes(bytes_s, byteorder='big')
-print(result)
-begin = datetime.datetime(2000, 1, 1)
-now = begin + datetime.timedelta(seconds=result)
-print(now)
+Base = declarative_base()
+
+
+class Person(Base):
+    __tablename__ = 'person'
+    # Here we define columns for the table person
+    # Notice that each column is also a normal Python instance attribute.
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+
+
+class Address(Base):
+    __tablename__ = 'address'
+    # Here we define columns for the table address.
+    # Notice that each column is also a normal Python instance attribute.
+    id = Column(Integer, primary_key=True)
+    street_name = Column(String(250))
+    street_number = Column(String(250))
+    post_code = Column(String(250), nullable=False)
+    person_id = Column(Integer, ForeignKey('person.id'))
+    person = relationship(Person)
+
+
+# Create an engine that stores data in the local directory's
+# sqlalchemy_example.db file.
+engine = create_engine('sqlite:///sqlalchemy_example.db')
+
+# Create all tables in the engine. This is equivalent to "Create Table"
+# statements in raw SQL.
+Base.metadata.create_all(engine)

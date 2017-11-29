@@ -3,6 +3,9 @@ from utils import *
 from constants import *
 from my_logger import logger
 import datetime
+from Models import *
+from dbhelper import *
+import uuid
 
 
 def temp_hum_handler(msg):
@@ -18,6 +21,7 @@ def temp_hum_handler(msg):
 
     temp_start_time = data[idx:idx + 4]
     logger.debug('temp start time %s' % parse_date(temp_start_time))
+    temp_start_time = bytes_to_int_1(temp_start_time, 4)
     idx += 4
 
     temp_freq = data[idx:idx + 2]
@@ -26,10 +30,12 @@ def temp_hum_handler(msg):
 
     temp_number = data[idx:idx + 1]
     logger.debug('temp number %d' % temp_number[0])
+    temp_number = temp_number[0]
     idx += 1
 
     hum_start_time = data[idx:idx + 4]
     logger.debug('hum start time %s' % parse_date(hum_start_time))
+    hum_start_time = bytes_to_int_1(hum_start_time, 4)
     idx += 4
 
     hum_freq = data[idx:idx + 2]
@@ -38,17 +44,52 @@ def temp_hum_handler(msg):
 
     hum_number = data[idx:idx + 1]
     logger.debug('hum number %d' % hum_number[0])
+    hum_number = hum_number[0]
     idx += 1
 
-    temp_data_length = temp_number[0] * 2
+    temp_data_length = temp_number * 2
     temp_data = data[idx:idx + temp_data_length]
     logger.debug('temp data %s' % parse_temp(temp_data, temp_data_length))
     idx += temp_data_length
 
-    hum_data_length = hum_number[0] * 2
+    hum_data_length = hum_number * 2
     hum_data = data[idx:idx + hum_data_length]
     logger.debug('hum data %s' % parse_hum(hum_data, hum_data_length))
     idx += hum_data_length
+
+    ed = EndDevice()
+    hums = []
+    temps = []
+    ed.ext_addr = ext_addr.hex()
+    ed.voltage = parse_vcc(vcc)
+    ed.temp_freq = bytes_to_int_1(temp_freq, 2)
+    ed.hum_freq = bytes_to_int_1(hum_freq, 2)
+    end_device_id = find_end_device_id(ed.ext_addr)
+    if not end_device_id:
+        _ed = add_end_device(ed)
+        end_device_id = _ed.end_device_id
+        pass
+    update_end_device(ed, {'ext_addr': ed.ext_addr})
+    _temps = parse_temp(temp_data, temp_data_length)
+    for t in _temps:
+        temp = Temperature()
+        temp.temp_id = my_uuid()
+        temp.end_device_id = end_device_id
+        temp.temp_time = parse_date_1(temp_start_time)
+        temp_start_time += ed.temp_freq / 1000
+        temp.temp_value = t
+        temps.append(temp)
+    add_temperature_all(temps)
+    _hums = parse_hum(hum_data, hum_data_length)
+    for h in _hums:
+        hum = Humidity()
+        hum.humi_id = my_uuid()
+        hum.end_device_id = end_device_id
+        hum.humi_time = parse_date_1(hum_start_time)
+        hum_start_time += ed.hum_freq / 1000
+        hum.humi_value = h
+        hums.append(hum)
+    add_humidity_all(hums)
 
 
 # 设置协调器时钟

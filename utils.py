@@ -2,6 +2,7 @@
 import datetime
 from constants import *
 from my_logger import logger
+import uuid
 
 begin_time = datetime.datetime(2000, 1, 1)
 
@@ -12,6 +13,16 @@ def bytes_to_int(data):
     for i in range(len(temp_str), 0, -2):
         data_str += temp_str[i - 2:i]
     data_int = int().from_bytes(bytes().fromhex(data_str), 'big')
+    return data_int
+
+
+def bytes_to_int_1(data, length):
+    data_int = 0
+    for i in range(length - 1, -1, -1):
+        b = data[i]
+        data_int |= b
+        if i is not 0:
+            data_int <<= 8
     return data_int
 
 
@@ -27,6 +38,10 @@ def parse_date(time):
     time_int = bytes_to_int(time)
     time = begin_time + datetime.timedelta(seconds=time_int)
     return time
+
+
+def parse_date_1(time):
+    return begin_time + datetime.timedelta(seconds=time)
 
 
 def parse_vcc(vcc):
@@ -77,3 +92,7 @@ def build_send_data(ser, cmd_type, cmd_id, _len, data):
     logger.debug('serial data %s' % send_data)
     ser.write(send_data)
     pass
+
+
+def my_uuid():
+    return str(uuid.uuid4())
