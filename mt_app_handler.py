@@ -102,7 +102,11 @@ def set_coor_clock(ser):
     data[7] = now.month
     data[8] = now.day
     data[9:11] = int_to_array(now.year, 2)
-    build_send_data(ser, REQ_SYS, SYS_SET_TIME, len(data), data)
+    send_data = build_send_data(ser, REQ_SYS, SYS_SET_TIME, len(data), data)
+    serial_out_msg_queue.put({
+        'type': 'set_clock',
+        'data': send_data
+    })
     logger.debug('set coor clock %s' % data)
 
 
@@ -115,7 +119,8 @@ def mt_app_handler(msg, ser):
     logger.debug('app handler')
     if len(msg.data):
         if msg.data[0] == TEMP_HUM_DATA:
-            temp_hum_handler(msg)
+            logger.debug('temp hum data')
+            # temp_hum_handler(msg)
             return
         if msg.data[0] == COOR_START:
             logger.warning('coor start')

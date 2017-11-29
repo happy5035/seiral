@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import serial
-from queue import Queue
+from msg_queue import *
+from queue import Empty
 from threading import Thread
 from mt_sys_handler import *
 from mt_app_handler import *
 from mt_msg import Msg
 import threading
 from my_logger import logger
-from flask import Flask, render_template
+from flask import Flask
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xjtu'
 socketio = SocketIO(app)
-
-msg_queue = Queue()
 
 state = SOP_STATE
 timer = None
@@ -146,7 +145,11 @@ functions = {
 def msg_handler(ser):
     while True:
         _msg = msg_queue.get()
-        logger.debug('msg coming')
+        logger.debug('msg coming ')
+        t = _msg.cmd_state1 & TYPE_MASK
+        if t == SRSP and len(_msg.data):
+            if _msg.data[0] == SUCCESS or _msg.data[0] == FAILED:
+                serial_rep_msg_queue.put(_msg.data[0])
         subsystem = _msg.cmd_state1 & SUB_SYSTEM_MASK
         if subsystem == SYS:
             mt_sys_handler(_msg, ser)
@@ -161,10 +164,6 @@ def msg_handler(ser):
 def test_message(message):
     emit('my response', {'data': 'got it!'})
     print(message)
-
-
-serial_in_msg_queue = Queue()
-serial_out_msg_queue = Queue()
 
 
 # class SerialReadThread(Thread):
@@ -283,14 +282,38 @@ class SerialProcessThread(Thread):
         pass
 
 
+class SerialSendDataThread(Thread):
+    def __init__(self, seri):
+        super().__init__()
+        self.serial = seri
+
+    def run(self):
+        while True:
+            send_data = serial_out_msg_queue.get()
+            data = send_data['data']
+            ser.write(data)
+            try:
+                rep = serial_rep_msg_queue.get(timeout=2)
+                if rep == SUCCESS:
+                    logger.info('rep success,data = %s' % data)
+                    pass
+                if rep == FAILED:
+                    logger.warning('rep failed,data =  %s' % data)
+                    pass
+            except Empty as e:
+                logger.warning('rep timeout,data =  %s' % data)
+                pass
+
+        pass
+
+
 if __name__ == '__main__':
     # Thread(target=socketio.run, args=(app, '127.0.0.1', 8088,)).start()
     SerialProcessThread().start()
     with serial.Serial('COM4', 38400) as ser:
         Thread(target=msg_handler, args=(ser,)).start()
+        SerialSendDataThread(ser).start()
         while True:
-            # func = functions[state]
-            # func(ser)
             serial_in_msg_queue.put(ser.read())
         pass
     pass

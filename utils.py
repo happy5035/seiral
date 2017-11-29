@@ -3,6 +3,7 @@ import datetime
 from constants import *
 from my_logger import logger
 import uuid
+from msg_queue import *
 
 begin_time = datetime.datetime(2000, 1, 1)
 
@@ -90,7 +91,9 @@ def build_send_data(ser, cmd_type, cmd_id, _len, data):
     send_data[4:4 + _len] = data[:]
     send_data[send_data_len - 1] = util_cal_fcs(send_data[1:_len + 4])
     logger.debug('serial data %s' % send_data)
-    ser.write(send_data)
+    # serial_out_msg_queue.put(send_data)
+    return send_data
+    # ser.write(send_data)
     pass
 
 
