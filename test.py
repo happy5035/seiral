@@ -1,37 +1,22 @@
-import os
-import sys
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
 
-Base = declarative_base()
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'xjtu'
+socketio = SocketIO(app)
 
 
-class Person(Base):
-    __tablename__ = 'person'
-    # Here we define columns for the table person
-    # Notice that each column is also a normal Python instance attribute.
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 
-class Address(Base):
-    __tablename__ = 'address'
-    # Here we define columns for the table address.
-    # Notice that each column is also a normal Python instance attribute.
-    id = Column(Integer, primary_key=True)
-    street_name = Column(String(250))
-    street_number = Column(String(250))
-    post_code = Column(String(250), nullable=False)
-    person_id = Column(Integer, ForeignKey('person.id'))
-    person = relationship(Person)
+@socketio.on('my event')
+def test_message(message):
+    emit('my response', {'data': 'got it!'})
+    print(message)
 
 
-# Create an engine that stores data in the local directory's
-# sqlalchemy_example.db file.
-engine = create_engine('sqlite:///sqlalchemy_example.db')
-
-# Create all tables in the engine. This is equivalent to "Create Table"
-# statements in raw SQL.
-Base.metadata.create_all(engine)
+if __name__ == '__main__':
+    socketio.run(app=app, host='127.0.0.1', port=8088)
+    pass

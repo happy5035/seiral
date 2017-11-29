@@ -8,6 +8,12 @@ from mt_app_handler import *
 from mt_msg import Msg
 import threading
 from my_logger import logger
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'xjtu'
+socketio = SocketIO(app)
 
 msg_queue = Queue()
 
@@ -151,11 +157,140 @@ def msg_handler(ser):
     pass
 
 
+@socketio.on('my event')
+def test_message(message):
+    emit('my response', {'data': 'got it!'})
+    print(message)
+
+
+serial_in_msg_queue = Queue()
+serial_out_msg_queue = Queue()
+
+
+# class SerialReadThread(Thread):
+#     def serial(self, ser):
+#         self.ser = ser
+#
+#     def run(self):
+#         while True:
+#             serial_msg_queue.put(ser.read())
+#         pass
+
+
+class SerialProcessThread(Thread):
+    msg = []
+    idx = 0
+    msg_len = 1
+    state = SOP_STATE
+    data = {
+        'sop': SOP_STATE,
+        'len': 0,
+        'cmd_state1': 0,
+        'cmd_state2': 0,
+        'data': bytes(),
+        'fcs': 0
+    }
+
+    def get_one_msg(self, idx):
+        return int().from_bytes(self.msg[idx], 'little')
+
+    def time_out_process(self):
+        logger.warning('time out, state = %s' % self.state)
+        if self.state != SOP_STATE:
+            self.state = SOP_STATE
+            self.init_msg()
+        pass
+
+    timer = None
+
+    def init_timer(self):
+        return threading.Timer(1, self.time_out_process, (self,))
+
+    def init_msg(self):
+        self.data = {
+            'sop': SOP_STATE,
+            'len': 0,
+            'cmd_state1': 0,
+            'cmd_state2': 0,
+            'data': bytes(),
+            'fcs': 0
+        }
+
+    def cal_fcs(self):
+        fcs_token = 0
+        fcs_token ^= self.data['len']
+        fcs_token ^= self.data['cmd_state1']
+        fcs_token ^= self.data['cmd_state2']
+        for i in range(self.data['len']):
+            fcs_token ^= self.data['data'][i]
+        return fcs_token
+
+    def run(self):
+        self.timer = self.init_timer()
+        while True:
+            for _ in range(self.msg_len):
+                self.msg.append(serial_in_msg_queue.get())
+            if self.state == SOP_STATE:
+                char = self.get_one_msg(self.idx)
+                if char == MT_UART_SOF:
+                    self.state = LEN_STATE
+                    self.msg_len = 1
+                    # self.timer.start()
+            elif self.state == LEN_STATE:
+                char = self.get_one_msg(self.idx)
+                self.data['len'] = char
+                self.state = CMD_STATE1
+                self.msg_len = 1
+            elif self.state == CMD_STATE1:
+                char = self.get_one_msg(self.idx)
+                self.data['cmd_state1'] = char
+                self.state = CMD_STATE2
+                self.msg_len = 1
+            elif self.state == CMD_STATE2:
+                char = self.get_one_msg(self.idx)
+                self.data['cmd_state2'] = char
+                if self.data['len'] == 0:
+                    self.state = FCS_STATE
+                    self.msg_len = 1
+                else:
+                    self.state = DATA_STATE
+                    self.msg_len = self.data['len']
+            elif self.state == DATA_STATE:
+                chs = self.msg[self.idx - self.data['len'] + 1:self.idx + 1]
+                for b in chs:
+                    self.data['data'] += b
+                self.state = FCS_STATE
+                self.msg_len = 1
+                pass
+            elif self.state == FCS_STATE:
+                char = self.get_one_msg(self.idx)
+                fcs = self.cal_fcs()
+                if fcs == char:
+                    mt_msg = Msg(self.data)
+                    msg_queue.put(mt_msg)
+                    logger.info('add msg : %s' % mt_msg)
+                    self.msg = self.msg[self.idx + 1:]
+                else:
+                    logger.warning('fcs failed')
+                    self.msg = self.msg[1:]
+                self.timer.cancel()
+                self.timer = self.init_timer()
+                self.state = SOP_STATE
+                self.init_msg()
+                self.idx = -1
+                self.msg_len = 1
+            self.idx += self.msg_len
+        pass
+
+
 if __name__ == '__main__':
+    # Thread(target=socketio.run, args=(app, '127.0.0.1', 8088,)).start()
+    SerialProcessThread().start()
     with serial.Serial('COM4', 38400) as ser:
         Thread(target=msg_handler, args=(ser,)).start()
         while True:
-            func = functions[state]
-            func(ser)
+            # func = functions[state]
+            # func(ser)
+            serial_in_msg_queue.put(ser.read())
         pass
     pass
