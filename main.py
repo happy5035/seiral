@@ -142,7 +142,7 @@ functions = {
 }
 
 
-def msg_handler(ser):
+def msg_handler(seri):
     while True:
         _msg = msg_queue.get()
         logger.debug('msg coming ')
@@ -152,10 +152,10 @@ def msg_handler(ser):
                 serial_rep_msg_queue.put(_msg.data[0])
         subsystem = _msg.cmd_state1 & SUB_SYSTEM_MASK
         if subsystem == SYS:
-            mt_sys_handler(_msg, ser)
+            mt_sys_handler(_msg)
             continue
         if subsystem == APP:
-            mt_app_handler(_msg, ser)
+            mt_app_handler(_msg)
             continue
     pass
 
@@ -164,16 +164,6 @@ def msg_handler(ser):
 def test_message(message):
     emit('my response', {'data': 'got it!'})
     print(message)
-
-
-# class SerialReadThread(Thread):
-#     def serial(self, ser):
-#         self.ser = ser
-#
-#     def run(self):
-#         while True:
-#             serial_msg_queue.put(ser.read())
-#         pass
 
 
 class SerialProcessThread(Thread):

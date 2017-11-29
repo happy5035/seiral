@@ -93,7 +93,7 @@ def temp_hum_handler(msg):
 
 
 # 设置协调器时钟
-def set_coor_clock(ser):
+def set_coor_clock():
     now = datetime.datetime.now()
     data = [0] * 11
     data[4] = now.hour
@@ -102,7 +102,7 @@ def set_coor_clock(ser):
     data[7] = now.month
     data[8] = now.day
     data[9:11] = int_to_array(now.year, 2)
-    send_data = build_send_data(ser, REQ_SYS, SYS_SET_TIME, len(data), data)
+    send_data = build_send_data(REQ_SYS, SYS_SET_TIME, len(data), data)
     serial_out_msg_queue.put({
         'type': 'set_clock',
         'data': send_data
@@ -110,12 +110,12 @@ def set_coor_clock(ser):
     logger.debug('set coor clock %s' % data)
 
 
-def coor_start_handler(msg, ser):
-    set_coor_clock(ser)
+def coor_start_handler():
+    set_coor_clock()
     pass
 
 
-def mt_app_handler(msg, ser):
+def mt_app_handler(msg):
     logger.debug('app handler')
     if len(msg.data):
         if msg.data[0] == TEMP_HUM_DATA:
@@ -124,7 +124,7 @@ def mt_app_handler(msg, ser):
             return
         if msg.data[0] == COOR_START:
             logger.warning('coor start')
-            coor_start_handler(msg, ser)
+            coor_start_handler()
             return
         if msg.data[0] == SUCCESS:
             logger.info('cmd success')

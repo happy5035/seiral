@@ -81,7 +81,7 @@ def util_cal_fcs(data):
     return fcs_token
 
 
-def build_send_data(ser, cmd_type, cmd_id, _len, data):
+def build_send_data(cmd_type, cmd_id, _len, data):
     send_data_len = 5 + _len
     send_data = [0] * send_data_len
     send_data[0] = MT_UART_SOF
@@ -91,10 +91,7 @@ def build_send_data(ser, cmd_type, cmd_id, _len, data):
     send_data[4:4 + _len] = data[:]
     send_data[send_data_len - 1] = util_cal_fcs(send_data[1:_len + 4])
     logger.debug('serial data %s' % send_data)
-    # serial_out_msg_queue.put(send_data)
     return send_data
-    # ser.write(send_data)
-    pass
 
 
 def my_uuid():
