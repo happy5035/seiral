@@ -8,9 +8,41 @@ from dbhelper import *
 import uuid
 
 
+def set_end_freq(net_addr='0000', temp_freq=0, hum_freq=0, packet_freq=0, clock_freq=0):
+    logger.debug('set %s end: temp freq:%d,hum_freq:%d,packet_freq:%d,clock_freq:%d' % (
+        net_addr, temp_freq, hum_freq, packet_freq, clock_freq))
+    data = [0] * 19
+    idx = 0
+    data[idx] = GENERICAPP_ENDPOINT
+    idx += 1
+    data[idx] = MASTER_SET_FREQ_CMD
+    idx += 1
+    data[idx:idx + 2] = [b for b in bytes().fromhex(net_addr)]
+    idx += 2
+    data[idx:idx + 4] = int_to_array(temp_freq, 4)
+    idx += 4
+    data[idx:idx + 4] = int_to_array(hum_freq, 4)
+    idx += 4
+    data[idx:idx + 4] = int_to_array(packet_freq, 4)
+    idx += 4
+    data[idx:idx + 4] = int_to_array(clock_freq, 4)
+    send_data = build_send_data(REQ_APP_MSG, APP_MSG, len(data), data)
+    serial_out_msg_queue.put({
+        'type': 'set freq',
+        'data': send_data
+    })
+    logger.debug('set end freq %s' % data)
+    pass
+
+
 def temp_hum_handler(msg):
     data = msg.data
     idx = 1
+
+    net_addr = data[idx:idx + 2]
+    idx += 2
+    logger.debug('net addr %s' % net_addr.hex())
+
     ext_addr = data[idx:idx + 8]
     idx += 8
     logger.debug('ext addr %s' % ext_addr.hex())
@@ -60,6 +92,7 @@ def temp_hum_handler(msg):
     ed = EndDevice()
     hums = []
     temps = []
+    ed.net_addr = net_addr.hex()
     ed.ext_addr = ext_addr.hex()
     ed.voltage = parse_vcc(vcc)
     ed.temp_freq = bytes_to_int_1(temp_freq, 2)
@@ -90,6 +123,7 @@ def temp_hum_handler(msg):
         hum.humi_value = h
         hums.append(hum)
     add_humidity_all(hums)
+    set_end_freq(ed.net_addr, 10000, 30000, 60000, 0)
 
 
 # 设置协调器时钟
@@ -120,7 +154,7 @@ def mt_app_handler(msg):
     if len(msg.data):
         if msg.data[0] == TEMP_HUM_DATA:
             logger.debug('temp hum data')
-            # temp_hum_handler(msg)
+            temp_hum_handler(msg)
             return
         if msg.data[0] == COOR_START:
             logger.warning('coor start')
