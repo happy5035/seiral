@@ -123,7 +123,7 @@ def temp_hum_handler(msg):
         hum.humi_value = h
         hums.append(hum)
     add_humidity_all(hums)
-    set_end_freq(ed.net_addr, 10000, 30000, 60000, 0)
+    # set_end_freq(ed.net_addr, 10000, 30000, 60000, 0)
 
 
 # 设置协调器时钟
