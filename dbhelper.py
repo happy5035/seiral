@@ -47,6 +47,10 @@ def update_end_device(end_device: EndDevice, params):
                 device.hum_freq = end_device.hum_freq
             if end_device.temp_freq:
                 device.temp_freq = end_device.temp_freq
+            if end_device.hum:
+                device.hum = end_device.hum
+            if end_device.temp:
+                device.temp = end_device.temp
         sess.commit()
     except Exception as e:
         logger.error(e)

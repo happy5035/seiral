@@ -13,6 +13,8 @@ class EndDevice(Base):
     net_addr = Column(String(4))
     name = Column(String(255))
     voltage = Column(Float)
+    temp = Column(Float)
+    hum = Column(Float)
     start_time = Column(DateTime())
     hum_freq = Column(Integer)
     temp_freq = Column(Integer)
