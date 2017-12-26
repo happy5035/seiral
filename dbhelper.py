@@ -51,6 +51,8 @@ def update_end_device(end_device: EndDevice, params):
                 device.hum = end_device.hum
             if end_device.temp:
                 device.temp = end_device.temp
+            if end_device.update_time:
+                device.update_time = end_device.update_time
         sess.commit()
     except Exception as e:
         logger.error(e)
@@ -108,11 +110,11 @@ def add_end_device(ed: EndDevice) ->EndDevice:
         ed.end_device_id = my_uuid()
         ed.start_time = datetime.datetime.now()
         ed.status = 0
-        ed.voltage = 0
-        ed.hum_freq = 0
-        ed.temp_freq = 0
-        ed.name = 'test'
-        ed.net_addr = '0000'
+        # ed.voltage = 0
+        # ed.hum_freq = 0
+        # ed.temp_freq = 0
+        # ed.name = 'test'
+        # ed.net_addr = '0000'
         session.add(ed)
         session.commit()
     except Exception as e:
