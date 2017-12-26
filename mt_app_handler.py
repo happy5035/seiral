@@ -113,6 +113,7 @@ def temp_hum_handler(msg):
         temps.append(temp)
     if len(temps):
         ed.temp = temps[-1].temp_value
+        ed.update_time = temps[-1].temp_time
         pass
     add_temperature_all(temps)
     _hums = parse_hum(hum_data, hum_data_length)
@@ -126,11 +127,13 @@ def temp_hum_handler(msg):
         hums.append(hum)
     if len(hums):
         ed.hum = hums[-1].humi_value
+        ed.update_time = hums[-1].humi_time
         pass
     add_humidity_all(hums)
     # set_end_freq(ed.net_addr, 10000, 30000, 60000, 0)
 
     update_end_device(ed, {'ext_addr': ed.ext_addr})
+
 
 # 设置协调器时钟
 def set_coor_clock():

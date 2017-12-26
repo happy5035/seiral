@@ -5,7 +5,7 @@ from my_logger import logger
 import uuid
 from msg_queue import *
 
-begin_time = datetime.datetime(2000, 1, 1)
+begin_time = datetime.datetime(1999, 12, 31, 16, 0, 0)  # 转换成中国时间
 
 
 def bytes_to_int(data):

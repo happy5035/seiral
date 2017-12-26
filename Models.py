@@ -15,10 +15,11 @@ class EndDevice(Base):
     voltage = Column(Float)
     temp = Column(Float)
     hum = Column(Float)
-    start_time = Column(DateTime())
+    start_time = Column(DateTime)
     hum_freq = Column(Integer)
     temp_freq = Column(Integer)
     status = Column(Integer)
+    update_time = Column(DateTime)
 
     def __repr__(self):
         return "<EndDevice (id='%s',ext_addr='%s',ext_addr='%s',net_addr='%s',name='%s',voltage='%s'," \
