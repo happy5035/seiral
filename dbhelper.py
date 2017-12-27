@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from utils import *
 import datetime
 from my_logger import logger
+
 engine = create_engine("mysql+pymysql://root:123456@localhost:3306/datacenter?charset=utf8")
 DBSession = sessionmaker(bind=engine)
 
@@ -103,7 +104,7 @@ def find_end_device_id(ext_addr):
     return eid
 
 
-def add_end_device(ed: EndDevice) ->EndDevice:
+def add_end_device(ed: EndDevice) -> EndDevice:
     session = DBSession()
     try:
 
@@ -126,7 +127,11 @@ def add_end_device(ed: EndDevice) ->EndDevice:
 
 
 if __name__ == '__main__':
-    print(find_end_device_id('2d48eb0e004b1200'))
+    eid = find_end_device_id('5c588b17004b1200')
+    session = DBSession()
+    rst = session.query(Room).first()
+    print(rst)
+
     # add_end_device(EndDevice(ext_addr='1233333'))
     # import uuid
     # import datetime

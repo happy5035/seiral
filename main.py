@@ -142,7 +142,7 @@ functions = {
 }
 
 
-def msg_handler(seri):
+def msg_handler():
     while True:
         _msg = msg_queue.get()
         logger.debug('msg coming ')
@@ -298,12 +298,29 @@ class SerialSendDataThread(Thread):
 
 
 if __name__ == '__main__':
-    # Thread(target=socketio.run, args=(app, '127.0.0.1', 8088,)).start()
+
     SerialProcessThread().start()
     with serial.Serial('COM4', 38400) as ser:
-        Thread(target=msg_handler, args=(ser,)).start()
+        Thread(target=msg_handler, args=()).start()
         SerialSendDataThread(ser).start()
         while True:
-            serial_in_msg_queue.put(ser.read())
+            try:
+                serial_in_msg_queue.put(ser.read())
+            except Exception as e:
+                logger.warning('ser closed. \t %s', e)
+                ser.close()
+                flag = 1
+                while True:
+                    try:
+                        ser.open()
+                        logger.warning('ser re open success')
+                        break
+                    except Exception as e:
+                        if flag:
+                            flag = 0
+                            logger.warning('%s', e)
+                pass
+
         pass
+
     pass
