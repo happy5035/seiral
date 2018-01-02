@@ -103,6 +103,9 @@ def temp_hum_handler(msg):
         end_device_id = _ed.end_device_id
         pass
     _temps = parse_temp(temp_data, temp_data_length)
+    if len(_temps):
+        update_begin_time(temp_start_time, len(_temps) * (ed.temp_freq / 1000))
+
     for t in _temps:
         temp = Temperature()
         temp.temp_id = my_uuid()

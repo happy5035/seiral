@@ -2,6 +2,7 @@
 
 import serial
 from msg_queue import *
+from socket import *
 from queue import Empty
 from threading import Thread
 from mt_sys_handler import *
@@ -11,6 +12,7 @@ import threading
 from my_logger import logger
 from flask import Flask
 from flask_socketio import SocketIO, emit
+import time
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xjtu'
@@ -166,7 +168,7 @@ def test_message(message):
     print(message)
 
 
-class SerialProcessThread(Thread):
+class MsgProcessThread(Thread):
     msg = []
     idx = 0
     msg_len = 1
@@ -224,7 +226,7 @@ class SerialProcessThread(Thread):
                 if char == MT_UART_SOF:
                     self.state = LEN_STATE
                     self.msg_len = 1
-                    # self.timer.start()
+                    self.timer.start()
             elif self.state == LEN_STATE:
                 char = self.get_one_msg(self.idx)
                 self.data['len'] = char
@@ -272,7 +274,17 @@ class SerialProcessThread(Thread):
         pass
 
 
-class SerialSendDataThread(Thread):
+def serial_send_data(se, data):
+    se.write(data)
+    pass
+
+
+def socket_send_data(soc, data):
+    soc.send(bytes(data))
+    pass
+
+
+class MsgSendDataThread(Thread):
     def __init__(self, seri):
         super().__init__()
         self.serial = seri
@@ -281,7 +293,9 @@ class SerialSendDataThread(Thread):
         while True:
             send_data = serial_out_msg_queue.get()
             data = send_data['data']
-            ser.write(data)
+            # ser.write(data)
+            # serial_send_data(ser, data)
+            socket_send_data(self.serial, data)
             try:
                 rep = serial_rep_msg_queue.get(timeout=2)
                 if rep == SUCCESS:
@@ -297,12 +311,11 @@ class SerialSendDataThread(Thread):
         pass
 
 
-if __name__ == '__main__':
-
-    SerialProcessThread().start()
-    with serial.Serial('COM4', 38400) as ser:
+def serial_process():
+    MsgProcessThread().start()
+    with serial.Serial('COM3', 38400) as ser:
         Thread(target=msg_handler, args=()).start()
-        SerialSendDataThread(ser).start()
+        MsgSendDataThread(ser).start()
         while True:
             try:
                 serial_in_msg_queue.put(ser.read())
@@ -322,5 +335,65 @@ if __name__ == '__main__':
                 pass
 
         pass
+    pass
+
+
+def init_coor_device():
+    import mt_app_handler
+    # 设置协调器时钟
+    mt_app_handler.set_coor_clock()
 
     pass
+
+
+sync_timer = None
+
+
+class SyncCoorClockThread(Thread):
+    def __init__(self, t):
+        super().__init__()
+        self.t = t
+
+    def run(self):
+        while True:
+            time.sleep(self.t)
+            set_coor_clock()
+        pass
+
+
+if __name__ == '__main__':
+    msg_process_thread = MsgProcessThread()
+    msg_process_thread.setDaemon(True)
+    msg_process_thread.start()
+    host = '192.168.11.254'
+    port = 8080
+    addr = (host, port)
+    tcpClient = socket(AF_INET, SOCK_STREAM)
+    tcpClient.connect(addr)
+    init_coor_device()
+    Thread(target=msg_handler, args=()).start()
+    msg_send_thread = MsgSendDataThread(tcpClient)
+    msg_send_thread.setDaemon(True)
+    msg_send_thread.start()
+    sync_clock_thread = SyncCoorClockThread(1800)  # 30min同步一次时间
+    sync_clock_thread.setDaemon(True)
+    sync_clock_thread.start()
+    while True:
+        try:
+            serial_in_msg_queue.put(tcpClient.recv(1))
+        except Exception as e:
+            logger.warning('tcp connect closed \t %s' % e)
+            tcpClient.close()
+            flag = 1
+            while True:
+                try:
+                    tcpClient = socket(AF_INET, SOCK_STREAM)
+                    tcpClient.connect(addr)
+                    init_coor_device()
+                    logger.warning('re connect success')
+                    break
+                except Exception as e:
+                    tcpClient.close()
+                    if flag:
+                        flag = 0
+                        logger.warning('%s' % e)
