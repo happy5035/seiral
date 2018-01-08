@@ -195,7 +195,7 @@ class MsgProcessThread(Thread):
     timer = None
 
     def init_timer(self):
-        return threading.Timer(1, self.time_out_process, (self,))
+        return threading.Timer(1, self.time_out_process, ())
 
     def init_msg(self):
         self.data = {
