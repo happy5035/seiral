@@ -1,5 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 /log
+*.pyc
+__pycache__\*
 .idea
 test*
-.pyc
+__pycache__/msg_queue.cpython-35.pyc.1974288778096
