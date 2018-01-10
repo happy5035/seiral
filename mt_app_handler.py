@@ -108,6 +108,9 @@ def temp_hum_handler(msg):
     ed.voltage = parse_vcc(vcc)
     ed.temp_freq = bytes_to_int_1(temp_freq, 2)
     ed.hum_freq = bytes_to_int_1(hum_freq, 2)
+    ed.rssi = parse_rssi(rssi)
+    ed.lqi = parse_lqi(lqi)
+    ed.pv = parse_pv(pv)
     end_device_id = find_end_device_id(ed.ext_addr)
     if not end_device_id:
         _ed = add_end_device(ed)

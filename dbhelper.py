@@ -54,6 +54,12 @@ def update_end_device(end_device: EndDevice, params):
                 device.temp = end_device.temp
             if end_device.update_time:
                 device.update_time = end_device.update_time
+            if end_device.rssi:
+                device.rssi = end_device.rssi
+            if end_device.lqi:
+                device.lqi = end_device.lqi
+            if end_device.pv:
+                device.pv = end_device.pv
         sess.commit()
     except Exception as e:
         logger.error(e)
