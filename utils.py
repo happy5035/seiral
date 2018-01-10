@@ -67,6 +67,19 @@ def parse_vcc(vcc):
     return vcc_int / 100.0
 
 
+def parse_pv(pv):
+    pv_int = bytes_to_int(pv)
+    return pv_int
+
+def parse_rssi(rssi):
+    rssi_int = bytes_to_int(rssi) - 255
+    return rssi_int
+
+def parse_lqi(lqi):
+    lqi_int = bytes_to_int(lqi)
+    return lqi_int
+
+
 def parse_freq(freq):
     return bytes_to_int(freq)
 

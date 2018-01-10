@@ -313,7 +313,7 @@ class MsgSendDataThread(Thread):
 
 def serial_process():
     MsgProcessThread().start()
-    with serial.Serial('COM3', 38400) as ser:
+    with serial.Serial('COM4', 38400) as ser:
         Thread(target=msg_handler, args=()).start()
         MsgSendDataThread(ser).start()
         while True:
@@ -360,8 +360,7 @@ class SyncCoorClockThread(Thread):
             set_coor_clock()
         pass
 
-
-if __name__ == '__main__':
+def http_process():
     msg_process_thread = MsgProcessThread()
     msg_process_thread.setDaemon(True)
     msg_process_thread.start()
@@ -397,3 +396,6 @@ if __name__ == '__main__':
                     if flag:
                         flag = 0
                         logger.warning('%s' % e)
+
+if __name__ == '__main__':
+    serial_process()
