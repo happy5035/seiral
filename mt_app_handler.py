@@ -55,6 +55,14 @@ def temp_hum_handler(msg):
     logger.debug('params version %d' % parse_pv(pv))
     idx += 1
 
+    tw = data[idx:idx + 2]
+    logger.debug('time window %d' % parse_time_window(tw))
+    idx += 2
+
+    parent = data[idx:idx + 2]
+    logger.debug('parent  %s' % parent.hex())
+    idx += 2
+
     temp_start_time = data[idx:idx + 4]
     logger.debug('temp start time %s' % parse_date(temp_start_time))
     temp_start_time = bytes_to_int_1(temp_start_time, 4)
@@ -111,6 +119,8 @@ def temp_hum_handler(msg):
     ed.rssi = parse_rssi(rssi)
     ed.lqi = parse_lqi(lqi)
     ed.pv = parse_pv(pv)
+    ed.parent = parent.hex()
+    ed.time_window = parse_time_window(tw)
     end_device_id = find_end_device_id(ed.ext_addr)
     if not end_device_id:
         _ed = add_end_device(ed)
@@ -175,6 +185,77 @@ def coor_start_handler():
     pass
 
 
+def end_report_status_handler(msg):
+    data = msg.data
+    idx = 1
+
+    net_addr = data[idx:idx + 2]
+    idx += 2
+    logger.debug('net addr %s' % net_addr.hex())
+
+    ext_addr = data[idx:idx + 8]
+    idx += 8
+    logger.debug('ext addr %s' % ext_addr.hex())
+
+    vcc = data[idx:idx + 2]
+    logger.debug('vcc %.2fV' % parse_vcc(vcc))
+    idx += 2
+
+    pv = data[idx:idx + 1]
+    logger.debug('params version %d' % parse_pv(pv))
+    idx += 1
+
+    tw = data[idx:idx + 2]
+    logger.debug('time window %d' % parse_time_window(tw))
+    idx += 2
+
+    parent = data[idx:idx + 2]
+    logger.debug('parent  %s' % parent.hex())
+    idx += 2
+
+    clock = data[idx:idx + 4]
+    logger.debug('clock  %s' % parse_date(clock))
+    idx += 4
+
+    temp_freq = data[idx:idx + 4]
+    logger.debug('temp freq %s' % parse_freq(temp_freq))
+    idx += 4
+
+    hum_freq = data[idx:idx + 4]
+    logger.debug('hum freq %s' % parse_freq(hum_freq))
+    idx += 4
+
+    packet_freq = data[idx:idx + 4]
+    logger.debug('packet freq %s' % parse_freq(packet_freq))
+    idx += 4
+
+    sync_clock_freq = data[idx:idx + 4]
+    logger.debug('sync clock freq %s' % parse_freq(sync_clock_freq))
+    idx += 4
+    rssi = data[idx:idx + 1]
+    logger.debug('rssi %d db' % parse_rssi(rssi))
+    idx += 1
+
+    lqi = data[idx:idx + 1]
+    logger.debug('Link LinkQuality %d' % parse_lqi(lqi))
+
+    ed = EndDevice()
+    ed.net_addr = net_addr.hex()
+    ed.ext_addr = ext_addr.hex()
+    ed.voltage = parse_vcc(vcc)
+    ed.temp_freq = bytes_to_int_1(temp_freq, 2)
+    ed.hum_freq = bytes_to_int_1(hum_freq, 2)
+    ed.rssi = parse_rssi(rssi)
+    ed.lqi = parse_lqi(lqi)
+    ed.pv = parse_pv(pv)
+    ed.parent = parent.hex()
+    ed.time_window = parse_time_window(tw)
+    end_device_id = find_end_device_id(ed.ext_addr)
+    if not end_device_id:
+        _ed = add_end_device(ed)
+        end_device_id = _ed.end_device_id
+    update_end_device(ed, {'ext_addr': ed.ext_addr})
+
 def mt_app_handler(msg):
     logger.debug('app handler')
     if len(msg.data):
@@ -186,6 +267,10 @@ def mt_app_handler(msg):
             logger.warning('coor start')
             coor_start_handler()
             return
+        if msg.data[0] == END_REPORT_STATUS_CMD:
+            logger.warning('end report status')
+            end_report_status_handler(msg)
+            return 
         if msg.data[0] == SUCCESS:
             logger.info('cmd success')
             return

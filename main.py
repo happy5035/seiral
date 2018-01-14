@@ -294,8 +294,8 @@ class MsgSendDataThread(Thread):
             send_data = serial_out_msg_queue.get()
             data = send_data['data']
             # ser.write(data)
-            # serial_send_data(ser, data)
-            socket_send_data(self.serial, data)
+            serial_send_data(self.serial, data)
+            # socket_send_data(self.serial, data)
             try:
                 rep = serial_rep_msg_queue.get(timeout=2)
                 if rep == SUCCESS:

@@ -71,6 +71,14 @@ def parse_pv(pv):
     pv_int = bytes_to_int(pv)
     return pv_int
 
+def parse_time_window(tw):
+    tw_int = bytes_to_int(tw)
+    return tw_int
+
+def parse_parent(parent):
+
+    return parent
+
 def parse_rssi(rssi):
     rssi_int = bytes_to_int(rssi) - 255
     return rssi_int

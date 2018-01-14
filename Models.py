@@ -23,6 +23,8 @@ class EndDevice(Base):
     rssi = Column(Integer)
     lqi = Column(Integer)
     pv = Column(Integer)
+    parent = Column(String(4))
+    time_window = Column(Integer)
 
     def __repr__(self):
         return "<EndDevice (id='%s',ext_addr='%s',ext_addr='%s',net_addr='%s',name='%s',voltage='%s'," \
