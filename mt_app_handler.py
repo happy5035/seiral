@@ -254,6 +254,7 @@ def end_report_status_handler(msg):
     ed.parent = parent.hex()
     ed.time_window = parse_time_window(tw)
     end_device_id = find_end_device_id(ed.ext_addr)
+    ed.update_time = datetime.datetime.utcnow()
     if not end_device_id:
         _ed = add_end_device(ed)
         end_device_id = _ed.end_device_id
@@ -291,7 +292,7 @@ def router_report_status_handler(msg):
     ed.ext_addr = ext_addr.hex()
     ed.lqi = parse_lqi(lqi)
     ed.rssi = parse_rssi(rssi)
-    ed.update_time = datetime.datetime.now()
+    ed.update_time = datetime.datetime.utcnow()
 
     ed = EndDevice()
     ed.net_addr = net_addr.hex()

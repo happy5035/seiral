@@ -46,7 +46,7 @@ def parse_date_1(time):
 
 def verify_temp_time(time,offset):
     time = parse_date_1(time)
-    now = datetime.datetime.now()
+    now = datetime.datetime.utcnow()
     delta_days = (now - time).days
     if delta_days > 1:
         now = now - datetime.timedelta(seconds=offset)
