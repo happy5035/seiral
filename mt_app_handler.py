@@ -291,6 +291,7 @@ def router_report_status_handler(msg):
     ed.ext_addr = ext_addr.hex()
     ed.lqi = parse_lqi(lqi)
     ed.rssi = parse_rssi(rssi)
+    ed.update_time = datetime.datetime.now()
 
     ed = EndDevice()
     ed.net_addr = net_addr.hex()
