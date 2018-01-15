@@ -64,6 +64,8 @@ def update_end_device(end_device: EndDevice, params):
                 device.time_window = end_device.time_window
             if end_device.parent:
                 device.parent = end_device.parent
+            if end_device.type:
+                device.type = end_device.type
         sess.commit()
     except Exception as e:
         logger.error(e)

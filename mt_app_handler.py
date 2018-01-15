@@ -127,9 +127,12 @@ def temp_hum_handler(msg):
         end_device_id = _ed.end_device_id
         pass
     _temps = parse_temp(temp_data, temp_data_length)
+    offset = 0
     if len(_temps):
-        update_begin_time(temp_start_time, len(_temps) * (ed.temp_freq / 1000))
-
+        offset = verify_temp_time(temp_start_time, len(_temps) * (ed.temp_freq / 1000))
+    # if len(_temps):
+        # update_begin_time(temp_start_time, len(_temps) * (ed.temp_freq / 1000))
+        temp_start_time = offset
     for t in _temps:
         temp = Temperature()
         temp.temp_id = my_uuid()
@@ -256,6 +259,52 @@ def end_report_status_handler(msg):
         end_device_id = _ed.end_device_id
     update_end_device(ed, {'ext_addr': ed.ext_addr})
 
+
+def router_report_status_handler(msg):
+    data = msg.data
+    idx = 1
+
+    net_addr = data[idx:idx + 2]
+    idx += 2
+    logger.debug('net addr %s' % net_addr.hex())
+
+    ext_addr = data[idx:idx + 8]
+    idx += 8
+    logger.debug('ext addr %s' % ext_addr.hex())
+
+    parent_net_addr = data[idx:idx + 2]
+    idx += 2
+    logger.debug('parent net addr %s' % parent_net_addr.hex())
+
+    parent_ext_addr = data[idx:idx + 8]
+    idx += 8
+    logger.debug('parent ext addr %s' % parent_ext_addr.hex())
+    rssi = data[idx:idx + 1]
+    logger.debug('rssi %d db' % parse_rssi(rssi))
+    idx += 1
+
+    lqi = data[idx:idx + 1]
+    logger.debug('Link LinkQuality %d' % parse_lqi(lqi))
+
+    ed = EndDevice()
+    ed.net_addr = net_addr.hex()
+    ed.ext_addr = ext_addr.hex()
+    ed.lqi = parse_lqi(lqi)
+    ed.rssi = parse_rssi(rssi)
+
+    ed = EndDevice()
+    ed.net_addr = net_addr.hex()
+    ed.ext_addr = ext_addr.hex()
+    ed.parent = parent_net_addr.hex()
+    ed.type = 2
+    end_device_id = find_end_device_id(ed.ext_addr)
+    if not end_device_id:
+        _ed = add_end_device(ed)
+        end_device_id = _ed.end_device_id
+    update_end_device(ed, {'ext_addr': ed.ext_addr})
+    pass
+
+
 def mt_app_handler(msg):
     logger.debug('app handler')
     if len(msg.data):
@@ -270,10 +319,15 @@ def mt_app_handler(msg):
         if msg.data[0] == END_REPORT_STATUS_CMD:
             logger.warning('end report status')
             end_report_status_handler(msg)
-            return 
+            return
+        if msg.data[0] == ROUTER_STATUS_CMD:
+            logger.warning('router report status')
+            router_report_status_handler(msg)
+            return
         if msg.data[0] == SUCCESS:
             logger.info('cmd success')
             return
         pass
+        logger.warning('unknown cmd id ')
     else:
         logger.warning('app msg data empty')

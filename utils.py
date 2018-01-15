@@ -44,7 +44,21 @@ def parse_date(time):
 def parse_date_1(time):
     return begin_time + datetime.timedelta(seconds=time)
 
+def verify_temp_time(time,offset):
+    time = parse_date_1(time)
+    now = datetime.datetime.now()
+    delta_days = (now - time).days
+    if delta_days > 1:
+        now = now - datetime.timedelta(seconds=offset)
+        now_timestamp = now.timestamp()
+        begin_time_timestamp = begin_time.timestamp()
+        return now_timestamp - begin_time_timestamp
+        pass
+    else:
+        pass
 
+
+    pass
 def update_begin_time(time, offset):
     # 如果发送回来的采集时间没有同步，则更新开始时间
     global begin_time
@@ -53,7 +67,7 @@ def update_begin_time(time, offset):
     delta_days = (now - time).days
     if delta_days > 1:
         # 如果采集时间在一天之前，则认为采集终端时间无效,使用新的开始时间
-        begin_time = begin_time - datetime.timedelta(seconds=offset)
+        begin_time = now - datetime.timedelta(seconds=offset)
         pass
     else:
         # 恢复原始时间
