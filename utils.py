@@ -53,7 +53,7 @@ def update_begin_time(time, offset):
     delta_days = (now - time).days
     if delta_days > 1:
         # 如果采集时间在一天之前，则认为采集终端时间无效,使用新的开始时间
-        begin_time = now - datetime.timedelta(seconds=offset)
+        begin_time = begin_time - datetime.timedelta(seconds=offset)
         pass
     else:
         # 恢复原始时间
