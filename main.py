@@ -340,6 +340,7 @@ def serial_process():
         Thread(target=msg_handler, args=()).start()
         send_data = SerialSendData(ser)
         MsgSendDataThread(send_data).start()
+        init_coor_device()
         while True:
             try:
                 serial_in_msg_queue.put(ser.read())
@@ -350,6 +351,7 @@ def serial_process():
                 while True:
                     try:
                         ser.open()
+                        init_coor_device()
                         logger.warning('ser re open success')
                         break
                     except Exception as e:
@@ -426,5 +428,5 @@ def tcp_process():
 
 
 if __name__ == '__main__':
-    serial_process()
-    # tcp_process()
+    # serial_process()
+    tcp_process()
