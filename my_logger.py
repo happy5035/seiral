@@ -3,7 +3,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 logger = logging.getLogger()
-logging.basicConfig(filename='log/log.log',
+logging.basicConfig(
                     format='[%(asctime)s %(name)s %(levelname)s line:%(lineno)d] %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     level=logging.DEBUG)

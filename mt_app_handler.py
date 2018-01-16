@@ -293,10 +293,6 @@ def router_report_status_handler(msg):
     ed.lqi = parse_lqi(lqi)
     ed.rssi = parse_rssi(rssi)
     ed.update_time = datetime.datetime.utcnow()
-
-    ed = EndDevice()
-    ed.net_addr = net_addr.hex()
-    ed.ext_addr = ext_addr.hex()
     ed.parent = parent_net_addr.hex()
     ed.type = 2
     end_device_id = find_end_device_id(ed.ext_addr)

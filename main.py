@@ -13,7 +13,7 @@ from my_logger import logger
 from flask import Flask
 from flask_socketio import SocketIO, emit
 import time
-
+import traceback
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xjtu'
 socketio = SocketIO(app)
@@ -146,19 +146,23 @@ functions = {
 
 def msg_handler():
     while True:
-        _msg = msg_queue.get()
-        logger.debug('msg coming ')
-        t = _msg.cmd_state1 & TYPE_MASK
-        if t == SRSP and len(_msg.data):
-            if _msg.data[0] == SUCCESS or _msg.data[0] == FAILED:
-                serial_rep_msg_queue.put(_msg.data[0])
-        subsystem = _msg.cmd_state1 & SUB_SYSTEM_MASK
-        if subsystem == SYS:
-            mt_sys_handler(_msg)
-            continue
-        if subsystem == APP:
-            mt_app_handler(_msg)
-            continue
+        try:
+
+            _msg = msg_queue.get()
+            logger.debug('msg coming ')
+            t = _msg.cmd_state1 & TYPE_MASK
+            if t == SRSP and len(_msg.data):
+                if _msg.data[0] == SUCCESS or _msg.data[0] == FAILED:
+                    serial_rep_msg_queue.put(_msg.data[0])
+            subsystem = _msg.cmd_state1 & SUB_SYSTEM_MASK
+            if subsystem == SYS:
+                mt_sys_handler(_msg)
+                continue
+            if subsystem == APP:
+                mt_app_handler(_msg)
+                continue
+        except Exception as e:
+            logger.error('msg handler error %s' % traceback.format_exc())
     pass
 
 
@@ -183,7 +187,10 @@ class MsgProcessThread(Thread):
     }
 
     def get_one_msg(self, idx):
-        return int().from_bytes(self.msg[idx], 'little')
+        if len(self.msg) > idx:
+            return int().from_bytes(self.msg[idx], 'little')
+        else:
+            return None
 
     def time_out_process(self):
         logger.warning('time out, state = %s' % self.state)
@@ -220,13 +227,16 @@ class MsgProcessThread(Thread):
         self.timer = self.init_timer()
         while True:
             for _ in range(self.msg_len):
+
                 self.msg.append(serial_in_msg_queue.get())
             if self.state == SOP_STATE:
                 char = self.get_one_msg(self.idx)
                 if char == MT_UART_SOF:
                     self.state = LEN_STATE
                     self.msg_len = 1
-                    self.timer.start()
+                    # if not self.timer._is_stopped:
+                    #     self.timer = self.init_timer()
+                    # self.timer.start()
             elif self.state == LEN_STATE:
                 char = self.get_one_msg(self.idx)
                 self.data['len'] = char
@@ -260,10 +270,10 @@ class MsgProcessThread(Thread):
                     mt_msg = Msg(self.data)
                     msg_queue.put(mt_msg)
                     logger.info('add msg : %s' % mt_msg)
-                    self.msg = self.msg[self.idx + 1:]
                 else:
                     logger.warning('fcs failed')
-                    self.msg = self.msg[1:]
+                    # self.msg = self.msg[1:]
+                self.msg = self.msg[self.idx + 1:]
                 self.timer.cancel()
                 self.timer = self.init_timer()
                 self.state = SOP_STATE
@@ -273,6 +283,21 @@ class MsgProcessThread(Thread):
             self.idx += self.msg_len
         pass
 
+
+class SendData():
+    def __init__(self, client):
+        self.client = client
+
+    def send_data(self, data):
+        pass
+
+class SerialSendData(SendData):
+    def send_data(self, data):
+        self.client.write(data)
+
+class TcpSendData(SendData):
+    def send_data(self, data):
+        self.client.send(bytes(data))
 
 def serial_send_data(se, data):
     se.write(data)
@@ -285,17 +310,15 @@ def socket_send_data(soc, data):
 
 
 class MsgSendDataThread(Thread):
-    def __init__(self, seri):
+    def __init__(self, client):
         super().__init__()
-        self.serial = seri
+        self.client = client
 
     def run(self):
         while True:
             send_data = serial_out_msg_queue.get()
             data = send_data['data']
-            # ser.write(data)
-            serial_send_data(self.serial, data)
-            # socket_send_data(self.serial, data)
+            self.client.send_data(data)
             try:
                 rep = serial_rep_msg_queue.get(timeout=2)
                 if rep == SUCCESS:
@@ -313,9 +336,10 @@ class MsgSendDataThread(Thread):
 
 def serial_process():
     MsgProcessThread().start()
-    with serial.Serial('COM4', 38400) as ser:
+    with serial.Serial('COM8', 38400) as ser:
         Thread(target=msg_handler, args=()).start()
-        MsgSendDataThread(ser).start()
+        send_data = SerialSendData(ser)
+        MsgSendDataThread(send_data).start()
         while True:
             try:
                 serial_in_msg_queue.put(ser.read())
@@ -360,7 +384,8 @@ class SyncCoorClockThread(Thread):
             set_coor_clock()
         pass
 
-def http_process():
+
+def tcp_process():
     msg_process_thread = MsgProcessThread()
     msg_process_thread.setDaemon(True)
     msg_process_thread.start()
@@ -371,7 +396,8 @@ def http_process():
     tcpClient.connect(addr)
     init_coor_device()
     Thread(target=msg_handler, args=()).start()
-    msg_send_thread = MsgSendDataThread(tcpClient)
+    tcp_send_data = TcpSendData(tcpClient)
+    msg_send_thread = MsgSendDataThread(tcp_send_data)
     msg_send_thread.setDaemon(True)
     msg_send_thread.start()
     sync_clock_thread = SyncCoorClockThread(1800)  # 30min同步一次时间
@@ -388,6 +414,7 @@ def http_process():
                 try:
                     tcpClient = socket(AF_INET, SOCK_STREAM)
                     tcpClient.connect(addr)
+                    tcp_send_data.client = tcpClient
                     init_coor_device()
                     logger.warning('re connect success')
                     break
@@ -397,5 +424,7 @@ def http_process():
                         flag = 0
                         logger.warning('%s' % e)
 
+
 if __name__ == '__main__':
     serial_process()
+    # tcp_process()

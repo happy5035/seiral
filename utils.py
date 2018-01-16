@@ -44,8 +44,8 @@ def parse_date(time):
 def parse_date_1(time):
     return begin_time + datetime.timedelta(seconds=time)
 
-def verify_temp_time(time,offset):
-    time = parse_date_1(time)
+def verify_temp_time(start_time,offset):
+    time = parse_date_1(start_time)
     now = datetime.datetime.utcnow()
     delta_days = (now - time).days
     if delta_days > 1:
@@ -55,8 +55,8 @@ def verify_temp_time(time,offset):
         return now_timestamp - begin_time_timestamp
         pass
     else:
+        return start_time
         pass
-
 
     pass
 def update_begin_time(time, offset):
