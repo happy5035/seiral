@@ -16,4 +16,4 @@ fileshandle = logging.handlers.TimedRotatingFileHandler('log/myLog', when='D', i
 fileshandle.suffix = "%Y%m%d_%H%M%S.log"
 fileshandle.setLevel(logging.DEBUG)
 fileshandle.setFormatter(formatter)
-logging.getLogger('').addHandler(fileshandle)
+logger.addHandler(fileshandle)
