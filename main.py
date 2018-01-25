@@ -14,6 +14,7 @@ from flask import Flask
 from flask_socketio import SocketIO, emit
 import time
 import traceback
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xjtu'
 socketio = SocketIO(app)
@@ -161,7 +162,9 @@ def msg_handler():
             if subsystem == APP:
                 mt_app_handler(_msg)
                 continue
+            logger.debug('no msg handler: %s' % _msg)
         except Exception as e:
+            time.sleep(5)
             logger.error('msg handler error %s' % traceback.format_exc())
     pass
 
@@ -226,61 +229,65 @@ class MsgProcessThread(Thread):
     def run(self):
         self.timer = self.init_timer()
         while True:
-            for _ in range(self.msg_len):
-
-                self.msg.append(serial_in_msg_queue.get())
-            if self.state == SOP_STATE:
-                char = self.get_one_msg(self.idx)
-                if char == MT_UART_SOF:
-                    self.state = LEN_STATE
+            try:
+                for _ in range(self.msg_len):
+                    self.msg.append(serial_in_msg_queue.get())
+                if self.state == SOP_STATE:
+                    char = self.get_one_msg(self.idx)
+                    if char == MT_UART_SOF:
+                        self.state = LEN_STATE
+                        self.msg_len = 1
+                        # if not self.timer._is_stopped:
+                        #     self.timer = self.init_timer()
+                        # self.timer.start()
+                elif self.state == LEN_STATE:
+                    char = self.get_one_msg(self.idx)
+                    self.data['len'] = char
+                    self.state = CMD_STATE1
                     self.msg_len = 1
-                    # if not self.timer._is_stopped:
-                    #     self.timer = self.init_timer()
-                    # self.timer.start()
-            elif self.state == LEN_STATE:
-                char = self.get_one_msg(self.idx)
-                self.data['len'] = char
-                self.state = CMD_STATE1
-                self.msg_len = 1
-            elif self.state == CMD_STATE1:
-                char = self.get_one_msg(self.idx)
-                self.data['cmd_state1'] = char
-                self.state = CMD_STATE2
-                self.msg_len = 1
-            elif self.state == CMD_STATE2:
-                char = self.get_one_msg(self.idx)
-                self.data['cmd_state2'] = char
-                if self.data['len'] == 0:
+                elif self.state == CMD_STATE1:
+                    char = self.get_one_msg(self.idx)
+                    self.data['cmd_state1'] = char
+                    self.state = CMD_STATE2
+                    self.msg_len = 1
+                elif self.state == CMD_STATE2:
+                    char = self.get_one_msg(self.idx)
+                    self.data['cmd_state2'] = char
+                    if self.data['len'] == 0:
+                        self.state = FCS_STATE
+                        self.msg_len = 1
+                    else:
+                        self.state = DATA_STATE
+                        self.msg_len = self.data['len']
+                elif self.state == DATA_STATE:
+                    chs = self.msg[self.idx - self.data['len'] + 1:self.idx + 1]
+                    for b in chs:
+                        self.data['data'] += b
                     self.state = FCS_STATE
                     self.msg_len = 1
-                else:
-                    self.state = DATA_STATE
-                    self.msg_len = self.data['len']
-            elif self.state == DATA_STATE:
-                chs = self.msg[self.idx - self.data['len'] + 1:self.idx + 1]
-                for b in chs:
-                    self.data['data'] += b
-                self.state = FCS_STATE
-                self.msg_len = 1
+                    pass
+                elif self.state == FCS_STATE:
+                    char = self.get_one_msg(self.idx)
+                    fcs = self.cal_fcs()
+                    if fcs == char:
+                        mt_msg = Msg(self.data)
+                        msg_queue.put(mt_msg)
+                        logger.info('add msg : %s' % mt_msg)
+                    else:
+                        logger.warning('fcs failed')
+                        # self.msg = self.msg[1:]
+                    self.msg = self.msg[self.idx + 1:]
+                    self.timer.cancel()
+                    # self.timer = self.init_timer()
+                    self.state = SOP_STATE
+                    self.init_msg()
+                    self.idx = -1
+                    self.msg_len = 1
+                self.idx += self.msg_len
+            except Exception as e:
+                time.sleep(5)
+                logger.error(e)
                 pass
-            elif self.state == FCS_STATE:
-                char = self.get_one_msg(self.idx)
-                fcs = self.cal_fcs()
-                if fcs == char:
-                    mt_msg = Msg(self.data)
-                    msg_queue.put(mt_msg)
-                    logger.info('add msg : %s' % mt_msg)
-                else:
-                    logger.warning('fcs failed')
-                    # self.msg = self.msg[1:]
-                self.msg = self.msg[self.idx + 1:]
-                self.timer.cancel()
-                self.timer = self.init_timer()
-                self.state = SOP_STATE
-                self.init_msg()
-                self.idx = -1
-                self.msg_len = 1
-            self.idx += self.msg_len
         pass
 
 
@@ -291,13 +298,16 @@ class SendData():
     def send_data(self, data):
         pass
 
+
 class SerialSendData(SendData):
     def send_data(self, data):
         self.client.write(data)
 
+
 class TcpSendData(SendData):
     def send_data(self, data):
         self.client.send(bytes(data))
+
 
 def serial_send_data(se, data):
     se.write(data)
@@ -316,21 +326,24 @@ class MsgSendDataThread(Thread):
 
     def run(self):
         while True:
-            send_data = serial_out_msg_queue.get()
-            data = send_data['data']
-            self.client.send_data(data)
             try:
-                rep = serial_rep_msg_queue.get(timeout=2)
-                if rep == SUCCESS:
-                    logger.info('rep success,data = %s' % data)
+                send_data = serial_out_msg_queue.get()
+                data = send_data['data']
+                self.client.send_data(data)
+                try:
+                    rep = serial_rep_msg_queue.get(timeout=2)
+                    if rep == SUCCESS:
+                        logger.info('rep success,data = %s' % data)
+                        pass
+                    if rep == FAILED:
+                        logger.warning('rep failed,data =  %s' % data)
+                        pass
+                except Empty as e:
+                    logger.warning('rep timeout,data =  %s' % data)
                     pass
-                if rep == FAILED:
-                    logger.warning('rep failed,data =  %s' % data)
-                    pass
-            except Empty as e:
-                logger.warning('rep timeout,data =  %s' % data)
-                pass
-
+            except Exception as e:
+                time.sleep(5)
+                logger.error(e)
         pass
 
 
@@ -382,8 +395,12 @@ class SyncCoorClockThread(Thread):
 
     def run(self):
         while True:
-            time.sleep(self.t)
-            set_coor_clock()
+            try:
+                time.sleep(self.t)
+                set_coor_clock()
+            except Exception as e:
+                time.sleep(5)
+                logger.error(e)
         pass
 
 
@@ -414,6 +431,7 @@ def tcp_process():
             flag = 1
             while True:
                 try:
+                    logger.warning('prepare re connect')
                     tcpClient = socket(AF_INET, SOCK_STREAM)
                     tcpClient.connect(addr)
                     tcp_send_data.client = tcpClient
@@ -422,9 +440,7 @@ def tcp_process():
                     break
                 except Exception as e:
                     tcpClient.close()
-                    if flag:
-                        flag = 0
-                        logger.warning('%s' % e)
+                    logger.warning('%s' % e)
 
 
 if __name__ == '__main__':
