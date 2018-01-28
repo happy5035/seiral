@@ -411,11 +411,12 @@ def tcp_process():
     host = '192.168.11.254'
     port = 8080
     addr = (host, port)
-    tcpClient = socket(AF_INET, SOCK_STREAM)
-    tcpClient.connect(addr)
+    tcp_client = socket(AF_INET, SOCK_STREAM)
+    tcp_client.connect(addr)
+    tcp_client.settimeout(5*60)  # 五分钟没有接收到数据说明直接重新连接
     init_coor_device()
     Thread(target=msg_handler, args=()).start()
-    tcp_send_data = TcpSendData(tcpClient)
+    tcp_send_data = TcpSendData(tcp_client)
     msg_send_thread = MsgSendDataThread(tcp_send_data)
     msg_send_thread.setDaemon(True)
     msg_send_thread.start()
@@ -424,22 +425,22 @@ def tcp_process():
     sync_clock_thread.start()
     while True:
         try:
-            serial_in_msg_queue.put(tcpClient.recv(1))
+            serial_in_msg_queue.put(tcp_client.recv(1))
         except Exception as e:
-            logger.warning('tcp connect closed \t %s' % e)
-            tcpClient.close()
-            flag = 1
+            logger.warning('tcp connect closed \t %s' % traceback.format_exc())
+            tcp_client.close()
             while True:
                 try:
                     logger.warning('prepare re connect')
-                    tcpClient = socket(AF_INET, SOCK_STREAM)
-                    tcpClient.connect(addr)
-                    tcp_send_data.client = tcpClient
+                    tcp_client = socket(AF_INET, SOCK_STREAM)
+                    tcp_client.settimeout(5*60 )  # 五分钟没有接收到数据说明直接重新连接
+                    tcp_client.connect(addr)
+                    tcp_send_data.client = tcp_client
                     init_coor_device()
                     logger.warning('re connect success')
                     break
                 except Exception as e:
-                    tcpClient.close()
+                    tcp_client.close()
                     logger.warning('%s' % e)
 
 

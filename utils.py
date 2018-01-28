@@ -48,7 +48,7 @@ def verify_temp_time(start_time,offset):
     time = parse_date_1(start_time)
     now = datetime.datetime.utcnow()
     delta_days = (now - time).days
-    if delta_days > 1:
+    if delta_days > 0:
         now = now - datetime.timedelta(seconds=offset)
         now_timestamp = now.timestamp()
         begin_time_timestamp = begin_time.timestamp()

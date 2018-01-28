@@ -15,8 +15,16 @@ def index():
 def test_message(message):
     emit('my response', {'data': 'got it!'})
     print(message)
-
+import traceback
 
 if __name__ == '__main__':
-    socketio.run(app=app, host='127.0.0.1', port=8088)
+    # socketio.run(app=app, host='127.0.0.1', port=8088)
+    try:
+        print(1/0)
+    except ZeroDivisionError as e:
+        print(e)
+        raise Exception(e)
+    except Exception as e:
+        print(e)
+
     pass
