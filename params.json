@@ -1,0 +1,42 @@
+[
+  {
+    "item_len": 1,
+    "item_id": 1025,
+    "item_name": "param_version"
+  },
+  {
+    "item_len": 4,
+    "item_id": 1026,
+    "item_name": "temp_freq"
+  },
+  {
+    "item_len": 4,
+    "item_id": 1027,
+    "item_name": "hum_freq"
+  },
+  {
+    "item_len": 4,
+    "item_id": 1028,
+    "item_name": "packet_freq"
+  },
+  {
+    "item_len": 4,
+    "item_id": 1029,
+    "item_name": "sync_clock_freq"
+  },
+  {
+    "item_len": 1,
+    "item_id": 1030,
+    "item_name": "packet_window"
+  },
+  {
+    "item_len": 4,
+    "item_id": 1281,
+    "item_name": "param_flag"
+  },
+  {
+    "item_len": 2,
+    "item_id": 1283,
+    "item_name": "time_window_interval"
+  }
+]
