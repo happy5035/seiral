@@ -131,6 +131,34 @@ def register_func1():
     pass
 
 
+def app_msg_req():
+    pv = 6
+    size = 1
+    item_id = 1026
+    item_len = 4
+    item_value = int_to_array(5000, 4)
+    data = [0] * 13
+    idx = 0
+    data[idx] = GENERICAPP_ENDPOINT
+    idx += 1
+    data[idx] = MASTER_SET_NV_CONFIG_CMD
+    idx += 1
+    data[idx] = pv
+    idx += 1
+    data[idx] = size
+    idx += 1
+    data[idx] = 8
+    idx += 1
+    data[idx:idx + 2] = int_to_array(item_id, 2)
+    idx += 2
+    data[idx:idx + 2] = int_to_array(item_len, 2)
+    idx += 2
+    data[idx:idx + 4] = item_value
+    idx += 4
+    return build_send_data(0x29, 0x00, len(data), data)
+    pass
+
+
 def find_params_by_name(name):
     import json
     params = json.load(open('params.json'))
@@ -144,8 +172,10 @@ def send_cmd():
     sock = client('localhost', 8081)
     pf = find_params_by_name('param_flag')
     # data = sys_osal_nv_write_req(pf['item_id'], pf['item_len'], item_value=[0, 0, 0, 0])
-    data = sys_osal_nv_read_req(pf['item_id'])
-
+    # pv = sys_osal_nv_read_req(1025)
+    data = app_msg_req()
+    sock.send(bytes(data))
+    data = sys_osal_nv_read_req(1025)
     sock.send(bytes(data))
     sock.close()
 
