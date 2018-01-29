@@ -14,6 +14,9 @@ from flask import Flask
 from flask_socketio import SocketIO, emit
 import time
 import traceback
+import socketserver
+
+import dill as pickle
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xjtu'
@@ -306,7 +309,10 @@ class SerialSendData(SendData):
 
 class TcpSendData(SendData):
     def send_data(self, data):
-        self.client.send(bytes(data))
+        if isinstance(data, bytes):
+            self.client.send(data)
+        elif isinstance(data, list):
+            self.client.send(bytes(data))
 
 
 def serial_send_data(se, data):
@@ -343,13 +349,13 @@ class MsgSendDataThread(Thread):
                     pass
             except Exception as e:
                 time.sleep(5)
-                logger.error(e)
+                logger.error(traceback.format_exc())
         pass
 
 
 def serial_process():
     MsgProcessThread().start()
-    with serial.Serial('COM8', 38400) as ser:
+    with serial.Serial('COM4', 38400) as ser:
         Thread(target=msg_handler, args=()).start()
         send_data = SerialSendData(ser)
         MsgSendDataThread(send_data).start()
@@ -413,7 +419,7 @@ def tcp_process():
     addr = (host, port)
     tcp_client = socket(AF_INET, SOCK_STREAM)
     tcp_client.connect(addr)
-    tcp_client.settimeout(5*60)  # 五分钟没有接收到数据说明直接重新连接
+    tcp_client.settimeout(5 * 60)  # 五分钟没有接收到数据说明直接重新连接
     init_coor_device()
     Thread(target=msg_handler, args=()).start()
     tcp_send_data = TcpSendData(tcp_client)
@@ -433,7 +439,7 @@ def tcp_process():
                 try:
                     logger.warning('prepare re connect')
                     tcp_client = socket(AF_INET, SOCK_STREAM)
-                    tcp_client.settimeout(5*60 )  # 五分钟没有接收到数据说明直接重新连接
+                    tcp_client.settimeout(5 * 60)  # 五分钟没有接收到数据说明直接重新连接
                     tcp_client.connect(addr)
                     tcp_send_data.client = tcp_client
                     init_coor_device()
@@ -444,6 +450,54 @@ def tcp_process():
                     logger.warning('%s' % e)
 
 
+class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(1024)
+
+        serial_out_msg_queue.put({
+            'data': data
+        })
+
+
+class ThreadedTCPRegisterRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(1024)
+        try:
+            data_func = pickle.loads(data)
+            register_func(data_func=data_func)
+        except Exception as e:
+            traceback.print_exc(e)
+            pass
+
+
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    def handle_error(self, request, client_address):
+        logger.error(request, client_address)
+        pass
+
+    pass
+
+
+def setup_tcp_server():
+    HOST, PORT = "localhost", 8081
+    server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
+    pass
+
+
+def setup_register_func_server():
+    HOST, PORT = "localhost", 8082
+    server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRegisterRequestHandler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
+    pass
+
+
 if __name__ == '__main__':
-    # serial_process()
-    tcp_process()
+    setup_tcp_server()
+    setup_register_func_server()
+    serial_process()
+    # tcp_process()

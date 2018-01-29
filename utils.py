@@ -4,6 +4,7 @@ from constants import *
 from my_logger import logger
 import uuid
 from msg_queue import *
+import dill as pick
 
 begin_time = datetime.datetime(1999, 12, 31, 16, 0, 0)  # 转换成中国时间
 
@@ -44,7 +45,8 @@ def parse_date(time):
 def parse_date_1(time):
     return begin_time + datetime.timedelta(seconds=time)
 
-def verify_temp_time(start_time,offset):
+
+def verify_temp_time(start_time, offset):
     time = parse_date_1(start_time)
     now = datetime.datetime.utcnow()
     delta_days = (now - time).days
@@ -59,6 +61,8 @@ def verify_temp_time(start_time,offset):
         pass
 
     pass
+
+
 def update_begin_time(time, offset):
     # 如果发送回来的采集时间没有同步，则更新开始时间
     global begin_time
@@ -85,17 +89,20 @@ def parse_pv(pv):
     pv_int = bytes_to_int(pv)
     return pv_int
 
+
 def parse_time_window(tw):
     tw_int = bytes_to_int(tw)
     return tw_int
 
-def parse_parent(parent):
 
+def parse_parent(parent):
     return parent
+
 
 def parse_rssi(rssi):
     rssi_int = bytes_to_int(rssi) - 255
     return rssi_int
+
 
 def parse_lqi(lqi):
     lqi_int = bytes_to_int(lqi)
@@ -133,7 +140,7 @@ def util_cal_fcs(data):
     return fcs_token
 
 
-def build_send_data(cmd_type, cmd_id, _len, data):
+def build_send_data(cmd_type, cmd_id, _len, data=[]):
     send_data_len = 5 + _len
     send_data = [0] * send_data_len
     send_data[0] = MT_UART_SOF
@@ -148,3 +155,29 @@ def build_send_data(cmd_type, cmd_id, _len, data):
 
 def my_uuid():
     return str(uuid.uuid4())
+
+
+handler_funcs = {}
+handler_funcs_filename = 'handler_funcs.pick'
+
+
+def register_func(data_func):
+    logger.info('register func name:%s , code :%s' % (data_func['name'], data_func['code']))
+    handler_funcs[data_func['code']] = {'func': data_func['func'], 'name': data_func['name']}
+    pick.dump(handler_funcs, open(handler_funcs_filename, 'wb'))
+    pass
+
+
+def build_code(cmd0, cmd1):
+    return '0X%02X0X%02X' % (cmd0, cmd1)
+    pass
+
+
+def get_handler_func(cmd0, cmd1):
+    _handler_funcs = pick.load(open(handler_funcs_filename, 'rb'))
+    code = build_code(cmd0, cmd1)
+    if code in _handler_funcs:
+        return _handler_funcs[code]
+    else:
+        return None
+    pass
