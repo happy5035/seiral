@@ -107,9 +107,10 @@ class RoomAxis(Base):
     __tablename__ = 'room_axis'
     room_axis_id = Column(Integer, primary_key=True)
     room_id = Column(Integer, ForeignKey('room.room_id'))
-    room_axis_name = Column(String(255))
-    room_axis_type = Column(Integer)
-
-    def __repr__(self):
-        return "<RoomAxis (id = '%s', room_id = '%s',room_axis_name = '%s',room_axis_type= '%s')>" \
-               % (self.room_axis_id, self.room_id, self.room_axis_name, self.room_axis_type)
+    x_num = Column(Integer)
+    x_value = Column(Integer)
+    y_num = Column(Integer)
+    y_value = Column(Integer)
+    z_num = Column(Integer)
+    z_value = Column(Integer)
+    note = Column(String(255))
