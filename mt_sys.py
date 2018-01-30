@@ -131,25 +131,6 @@ def register_func1():
     pass
 
 
-class NvItem:
-    item_id = 0
-    item_len = 0
-    item_value = 0
-
-    def __init__(self, item_id=0, item_len=0, item_value=0):
-        self.item_len = item_len
-        self.item_id = item_id
-        self.item_value = item_value
-        pass
-
-    def item_to_list(self):
-        data = [0] * (4 + self.item_len)
-        data[0:2] = int_to_array(self.item_id, 2)
-        data[2:4] = int_to_array(self.item_len, 2)
-        data[4:] = int_to_array(self.item_value, self.item_len)
-        return len(data), data
-
-    pass
 
 
 def app_msg_req(pv=0, items=[]):
@@ -176,13 +157,6 @@ def app_msg_req(pv=0, items=[]):
     pass
 
 
-def find_params_by_name(name):
-    import json
-    params = json.load(open('params.json'))
-    for p in params:
-        if p['item_name'] == name:
-            return p
-        pass
 
 
 def send_cmd():
@@ -190,12 +164,12 @@ def send_cmd():
     pf = find_params_by_name('param_flag')
     # data = sys_osal_nv_write_req(pf['item_id'], pf['item_len'], item_value=[0, 0, 0, 0])
     pv = sys_osal_nv_read_req(1025)
-    temp_freq = NvItem(1026, 4, 5000)
-    packet_freq = NvItem(1028, 4, 90000)
-    data = app_msg_req(pv=11, items=[temp_freq, packet_freq])
-    sock.send(bytes(data))
-    # data = sys_osal_nv_read_req(1025)
+    # temp_freq = NvItem(1026, 4, 5000)
+    # packet_freq = NvItem(1028, 4, 90000)
+    # data = app_msg_req(pv=11, items=[temp_freq, packet_freq])
     # sock.send(bytes(data))
+    data = sys_osal_nv_read_req(1029)
+    sock.send(bytes(data))
     sock.close()
 
 

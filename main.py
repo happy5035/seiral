@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 
 import serial
 from msg_queue import *
@@ -15,6 +16,7 @@ from flask_socketio import SocketIO, emit
 import time
 import traceback
 import socketserver
+import mt_sys
 
 import dill as pickle
 
@@ -459,6 +461,26 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
         })
 
 
+class ThreadedParamRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(1024)
+        data = str(data, 'utf-8')
+        data = json.loads(data)
+        items = []
+        pv = data['pv']
+        data = data['param']
+        for d in data:
+            param = find_params_by_name(d['name'])
+            item = NvItem(int(param['item_id']), int(param['item_len']), int(d['value']))
+            items.append(item)
+            pass
+        logger.info(items)
+        msg_data = mt_sys.app_msg_req(pv, items)
+        serial_out_msg_queue.put({
+            'data': msg_data
+        })
+
+
 class ThreadedTCPRegisterRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(1024)
@@ -487,6 +509,15 @@ def setup_tcp_server():
     pass
 
 
+def setup_param_server():
+    HOST, PORT = "localhost", 8088
+    server = ThreadedTCPServer((HOST, PORT), ThreadedParamRequestHandler)
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.daemon = True
+    server_thread.start()
+    pass
+
+
 def setup_register_func_server():
     HOST, PORT = "localhost", 8082
     server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRegisterRequestHandler)
@@ -498,6 +529,7 @@ def setup_register_func_server():
 
 if __name__ == '__main__':
     setup_tcp_server()
+    setup_param_server()
     setup_register_func_server()
     serial_process()
     # tcp_process()

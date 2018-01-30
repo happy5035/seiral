@@ -1,3 +1,4 @@
+import socket
 import socketserver
 import threading
 
@@ -50,6 +51,8 @@ def setup_tcp_server():
     server_thread.daemon = True
     server_thread.start()
     pass
+
+
 def find_params_by_name(name):
     import json
     params = json.load(open('params.json'))
@@ -59,8 +62,17 @@ def find_params_by_name(name):
         pass
 
 
+def client(ip, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((ip, port))
+    return sock
+
+
 if __name__ == '__main__':
     # setup_tcp_server()
     # while True:
     #     pass
-    print(find_params_by_name('temp_freq'))
+    import json
+
+    sock = client('localhost', 8088)
+    sock.send(bytes(json.dumps([{'name': 'temp_freq', 'value': 6000}]), encoding='utf-8'))

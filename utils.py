@@ -181,3 +181,36 @@ def get_handler_func(cmd0, cmd1):
     else:
         return None
     pass
+
+
+def find_params_by_name(name):
+    import json
+    params = json.load(open('params.json'))
+    for p in params:
+        if p['item_name'] == name:
+            return p
+        pass
+
+
+class NvItem:
+    item_id = 0
+    item_len = 0
+    item_value = 0
+
+    def __init__(self, item_id=0, item_len=0, item_value=0):
+        self.item_len = item_len
+        self.item_id = item_id
+        self.item_value = item_value
+        pass
+
+    def item_to_list(self):
+        data = [0] * (4 + self.item_len)
+        data[0:2] = int_to_array(self.item_id, 2)
+        data[2:4] = int_to_array(self.item_len, 2)
+        data[4:] = int_to_array(self.item_value, self.item_len)
+        return len(data), data
+
+    def __repr__(self):
+        return '<NvItem (%d,%d,%s)>' % (self.item_id, self.item_len, self.item_value)
+
+    pass
