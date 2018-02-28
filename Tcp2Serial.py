@@ -132,6 +132,7 @@ class SerialThreadSend(Thread):
             pass
         pass
 
+
 class TcpThreadSend(Thread):
     def __init__(self, serial, tcp):
         super().__init__()
@@ -154,8 +155,8 @@ if __name__ == '__main__':
     tcpClient = socket(AF_INET, SOCK_STREAM)
     tcpClient.connect(addr)
     with serial.Serial('COM8', 38400) as ser:
-        serial_thread = SerialThreadSend(ser,tcpClient)
-        tcp_thread = TcpThreadSend(ser,tcpClient)
+        serial_thread = SerialThreadSend(ser, tcpClient)
+        tcp_thread = TcpThreadSend(ser, tcpClient)
         serial_thread.start()
         tcp_thread.start()
         while True:

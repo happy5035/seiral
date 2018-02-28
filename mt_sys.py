@@ -162,13 +162,13 @@ def app_msg_req(pv=0, items=[]):
 def send_cmd():
     sock = client('localhost', 8081)
     pf = find_params_by_name('param_flag')
-    # data = sys_osal_nv_write_req(pf['item_id'], pf['item_len'], item_value=[0, 0, 0, 0])
-    pv = sys_osal_nv_read_req(1025)
+    # data = sys_osal_nv_write_req(pf['item_id'], pf['item_len'], item_value=[0x21, 0, 0, 0])
+    # pv = sys_osal_nv_read_req(1025)
     # temp_freq = NvItem(1026, 4, 5000)
     # packet_freq = NvItem(1028, 4, 90000)
     # data = app_msg_req(pv=11, items=[temp_freq, packet_freq])
     # sock.send(bytes(data))
-    data = sys_osal_nv_read_req(1029)
+    data = sys_osal_nv_read_req(1281)
     sock.send(bytes(data))
     sock.close()
 

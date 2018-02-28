@@ -531,5 +531,5 @@ if __name__ == '__main__':
     setup_tcp_server()
     setup_param_server()
     setup_register_func_server()
-    serial_process()
-    # tcp_process()
+    # serial_process()
+    tcp_process()

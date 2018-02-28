@@ -63,13 +63,13 @@ def temp_hum_handler(msg):
     logger.debug('parent  %s' % parent.hex())
     idx += 2
 
-    rssi = data[idx:idx + 1]
-    logger.debug('rssi %d db' % parse_rssi(rssi))
-    idx += 1
-
-    lqi = data[idx:idx + 1]
-    logger.debug('Link LinkQuality %d' % parse_lqi(lqi))
-    idx += 1
+    # rssi = data[idx:idx + 1]
+    # logger.debug('rssi %d db' % parse_rssi(rssi))
+    # idx += 1
+    #
+    # lqi = data[idx:idx + 1]
+    # logger.debug('Link LinkQuality %d' % parse_lqi(lqi))
+    # idx += 1
 
     temp_start_time = data[idx:idx + 4]
     logger.debug('temp start time %s' % parse_date(temp_start_time))
@@ -109,12 +109,12 @@ def temp_hum_handler(msg):
     logger.debug('hum data %s' % parse_hum(hum_data, hum_data_length))
     idx += hum_data_length
 
-    _rssi = data[idx:idx + 1]
-    logger.debug('rssi %d db' % parse_rssi(_rssi))
+    rssi = data[idx:idx + 1]
+    logger.debug('rssi %d db' % parse_rssi(rssi))
     idx += 1
 
-    _lqi = data[idx:idx + 1]
-    logger.debug('Link LinkQuality %d' % parse_lqi(_lqi))
+    lqi = data[idx:idx + 1]
+    logger.debug('Link LinkQuality %d' % parse_lqi(lqi))
 
     ed = EndDevice()
     hums = []
