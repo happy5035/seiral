@@ -262,6 +262,8 @@ def end_report_status_handler(msg):
     ed.pv = parse_pv(pv)
     ed.parent = parent.hex()
     ed.time_window = parse_time_window(tw)
+    ed.axis_id = 3
+    ed.type = 3
     end_device_id = find_end_device_id(ed.ext_addr)
     ed.update_time = datetime.datetime.utcnow()
     if not end_device_id:

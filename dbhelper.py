@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from utils import *
 import datetime
 from my_logger import logger
+from sqlalchemy import desc
 
 engine = create_engine("mysql+pymysql://root:123456@localhost:3306/datacenter?charset=utf8")
 DBSession = sessionmaker(bind=engine)
@@ -121,6 +122,8 @@ def add_end_device(ed: EndDevice) -> EndDevice:
     try:
 
         ed.end_device_id = my_uuid()
+        max_code = session.query(EndDevice).filter(EndDevice.code < 100).order_by(desc(EndDevice.code)).first().code
+        ed.code = max_code + 1
         ed.start_time = datetime.datetime.now()
         ed.status = 0
         # ed.voltage = 0
