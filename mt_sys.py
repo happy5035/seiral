@@ -131,8 +131,6 @@ def register_func1():
     pass
 
 
-
-
 def app_msg_req(pv=0, items=[]):
     size = len(items)
     item_data = []
@@ -157,18 +155,27 @@ def app_msg_req(pv=0, items=[]):
     pass
 
 
+def app_addr_info_req(user_type):
+    data = [0] * 3
+    data[0] = GENERICAPP_ENDPOINT
+    data[1] = MASTER_GET_ADDR_COUNT_CMD
+    data[2] = user_type
+    return build_send_data(0x29, 0x00, len(data), data)
+    pass
 
 
 def send_cmd():
     sock = client('localhost', 8081)
-    pf = find_params_by_name('param_flag')
+    # pf = find_params_by_name('param_flag')
     # data = sys_osal_nv_write_req(pf['item_id'], pf['item_len'], item_value=[0x21, 0, 0, 0])
     # pv = sys_osal_nv_read_req(1025)
     # temp_freq = NvItem(1026, 4, 5000)
     # packet_freq = NvItem(1028, 4, 90000)
     # data = app_msg_req(pv=11, items=[temp_freq, packet_freq])
     # sock.send(bytes(data))
-    data = sys_osal_nv_read_req(1281)
+    # data = sys_osal_nv_read_req(1281)
+    data = sys_ping_req()
+    print(data)
     sock.send(bytes(data))
     sock.close()
 

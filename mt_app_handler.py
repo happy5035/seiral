@@ -138,7 +138,7 @@ def temp_hum_handler(msg):
     offset = 0
     if len(_temps):
         offset = verify_temp_time(temp_start_time, len(_temps) * (ed.temp_freq / 1000))
-    # if len(_temps):
+        # if len(_temps):
         # update_begin_time(temp_start_time, len(_temps) * (ed.temp_freq / 1000))
         temp_start_time = offset
     for t in _temps:
@@ -314,6 +314,23 @@ def router_report_status_handler(msg):
     pass
 
 
+def addr_info_handler(msg):
+    data = msg.data
+    idx = 1
+    count = data[idx:idx + 1]
+    logger.info('addr count %d' % bytes_to_int(count))
+    idx += 1
+    addrs = []
+    for i in range(bytes_to_int(count)):
+        addr = data[idx:idx + 2]
+        idx += 2
+        _addr = bytes_to_int(addr)
+        addrs.append('0X%04X' % _addr)
+        pass
+    logger.warning('addr info %s' % addrs)
+    pass
+
+
 def mt_app_handler(msg):
     logger.debug('app handler')
     if len(msg.data):
@@ -332,6 +349,10 @@ def mt_app_handler(msg):
         if msg.data[0] == ROUTER_STATUS_CMD:
             logger.warning('router report status')
             router_report_status_handler(msg)
+            return
+        if msg.data[0] == MASTER_GET_ADDR_COUNT_CMD:
+            logger.warning("addr info")
+            addr_info_handler(msg)
             return
         if msg.data[0] == SUCCESS:
             logger.info('cmd success')
