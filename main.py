@@ -357,7 +357,7 @@ class MsgSendDataThread(Thread):
 
 def serial_process():
     MsgProcessThread().start()
-    with serial.Serial('COM8', 115200) as ser:
+    with serial.Serial('COM3', 38400) as ser:
         Thread(target=msg_handler, args=()).start()
         send_data = SerialSendData(ser)
         MsgSendDataThread(send_data).start()

@@ -298,19 +298,18 @@ def router_report_status_handler(msg):
     lqi = data[idx:idx + 1]
     logger.debug('Link LinkQuality %d' % parse_lqi(lqi))
 
-    ed = EndDevice()
-    ed.net_addr = net_addr.hex()
-    ed.ext_addr = ext_addr.hex()
-    ed.lqi = parse_lqi(lqi)
-    ed.rssi = parse_rssi(rssi)
-    ed.update_time = datetime.datetime.utcnow()
-    ed.parent = parent_net_addr.hex()
-    ed.type = 2
-    end_device_id = find_end_device_id(ed.ext_addr)
-    if not end_device_id:
-        _ed = add_end_device(ed)
-        end_device_id = _ed.end_device_id
-    update_end_device(ed, {'ext_addr': ed.ext_addr})
+    rd = RouterDevice()
+    rd.net_addr = net_addr.hex()
+    rd.ext_addr = ext_addr.hex()
+    rd.lqi = parse_lqi(lqi)
+    rd.rssi = parse_rssi(rssi)
+    rd.update_time = datetime.datetime.utcnow()
+    rd.parent = parent_net_addr.hex()
+    router_device_id = find_router_device_id(rd.ext_addr)
+    if not router_device_id:
+        _ed = add_router_device(rd)
+        return
+    update_router_device(rd, {'ext_addr': rd.ext_addr})
     pass
 
 

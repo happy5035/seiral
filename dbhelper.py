@@ -76,6 +76,54 @@ def update_end_device(end_device: EndDevice, params):
     pass
 
 
+def update_router_device(router_device: RouterDevice, params):
+    sess = DBSession()
+    try:
+        query = sess.query(RouterDevice)
+        _filter = query.filter_by(ext_addr=router_device.ext_addr)
+        if 'router_device_id' in params:
+            _filter = _filter.filter(RouterDevice.router_device_id == params['router_id'])
+        if 'ext_addr' in params:
+            _filter = _filter.filter(RouterDevice.ext_addr == params['ext_addr'])
+        if 'net_addr' in params:
+            _filter = _filter.filter(RouterDevice.net_addr == params['net_addr'])
+        if 'name' in params:
+            _filter = _filter.filter(RouterDevice.name == params['name'])
+        if 'status' in params:
+            _filter = _filter.filter(RouterDevice.status == params['status'])
+        rst = _filter.all()
+        for device in rst:
+            if router_device.ext_addr:
+                device.ext_addr = router_device.ext_addr
+            if router_device.net_addr:
+                device.net_addr = router_device.net_addr
+            if router_device.status:
+                device.status = router_device.status
+            if router_device.name:
+                device.name = router_device.name
+            if router_device.voltage:
+                device.voltage = router_device.voltage
+            if router_device.start_time:
+                device.start_time = router_device.start_time
+            if router_device.update_time:
+                device.update_time = router_device.update_time
+            if router_device.rssi:
+                device.rssi = router_device.rssi
+            if router_device.lqi:
+                device.lqi = router_device.lqi
+            if router_device.pv:
+                device.pv = router_device.pv
+            if router_device.parent:
+                device.parent = router_device.parent
+        sess.commit()
+    except Exception as e:
+        logger.error(e)
+        sess.rollback()
+        logger.warning('update router_device failed %s' % router_device)
+    sess.close()
+    pass
+
+
 def add_temperature_all(temps):
     session = DBSession()
     result = True
@@ -117,6 +165,19 @@ def find_end_device_id(ext_addr):
     return eid
 
 
+def find_router_device_id(ext_addr):
+    sess = DBSession()
+    rst = sess.query(RouterDevice).filter(RouterDevice.ext_addr == ext_addr).first()
+    if rst:
+        rid = rst.router_device_id
+    else:
+        rid = None
+
+    sess.commit()
+    sess.close()
+    return rid
+
+
 def add_end_device(ed: EndDevice) -> EndDevice:
     session = DBSession()
     try:
@@ -139,6 +200,36 @@ def add_end_device(ed: EndDevice) -> EndDevice:
         logger.error('add end device fialed %s', ed)
         session.close()
     return ed
+
+
+def add_router_device(rd: RouterDevice) -> RouterDevice:
+    session = DBSession()
+    try:
+
+        rd.router_device_id = my_uuid()
+        rd_tmp = session.query(RouterDevice).filter(RouterDevice.code < 100).order_by(
+            desc(RouterDevice.code)).first()
+        if rd_tmp is None:
+            max_code = 0
+        else:
+            max_code = rd.code
+        rd.axis_id = 3
+        rd.code = max_code + 1
+        rd.start_time = datetime.datetime.now()
+        rd.status = 0
+        # ed.voltage = 0
+        # ed.hum_freq = 0
+        # ed.temp_freq = 0
+        # ed.name = 'test'
+        # ed.net_addr = '0000'
+        session.add(rd)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logger.error(e)
+        logger.error('add end device fialed %s', rd)
+        session.close()
+    return rd
 
 
 def add_room_axis(axis: RoomAxis):

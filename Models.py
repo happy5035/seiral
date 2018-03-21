@@ -35,6 +35,26 @@ class EndDevice(Base):
                % (self.end_device_id, self.ext_addr, self.net_addr, self.name, self.voltage, self.status, self.hum_freq,
                   self.temp_freq, self.status)
 
+class RouterDevice(Base):
+    __tablename__ = 'router_device'
+    router_device_id = Column(String(255), primary_key=True)
+    ext_addr = Column(String(16))
+    net_addr = Column(String(4))
+    name = Column(String(255))
+    voltage = Column(Float)
+    start_time = Column(DateTime)
+    status = Column(Integer)
+    update_time = Column(DateTime)
+    rssi = Column(Integer)
+    lqi = Column(Integer)
+    parent = Column(String(4))
+    axis_id = Column(Integer)
+    code = Column(Integer)
+
+    def __repr__(self):
+        return "<RouterDevice (id='%s',ext_addr='%s',ext_addr='%s',net_addr='%s',name='%s',voltage='%s' )> " \
+               % (self.router_device_id, self.ext_addr, self.net_addr, self.name, self.voltage, self.status)
+
 
 class Humidity(Base):
     __tablename__ = 'humidity'
