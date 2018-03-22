@@ -52,7 +52,7 @@ class RouterDevice(Base):
     code = Column(Integer)
 
     def __repr__(self):
-        return "<RouterDevice (id='%s',ext_addr='%s',ext_addr='%s',net_addr='%s',name='%s',voltage='%s' )> " \
+        return "<RouterDevice (id='%s',ext_addr='%s',net_addr='%s',name='%s',voltage='%s',status='%s' )> " \
                % (self.router_device_id, self.ext_addr, self.net_addr, self.name, self.voltage, self.status)
 
 

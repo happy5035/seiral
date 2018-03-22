@@ -7,8 +7,9 @@ from utils import *
 import datetime
 from my_logger import logger
 from sqlalchemy import desc
+import config
 
-engine = create_engine("mysql+pymysql://root:123456@localhost:3306/datacenter?charset=utf8")
+engine = create_engine(config.sql_url)
 DBSession = sessionmaker(bind=engine)
 
 
@@ -111,8 +112,6 @@ def update_router_device(router_device: RouterDevice, params):
                 device.rssi = router_device.rssi
             if router_device.lqi:
                 device.lqi = router_device.lqi
-            if router_device.pv:
-                device.pv = router_device.pv
             if router_device.parent:
                 device.parent = router_device.parent
         sess.commit()
@@ -207,9 +206,10 @@ def add_router_device(rd: RouterDevice) -> RouterDevice:
     try:
 
         rd.router_device_id = my_uuid()
-        rd_tmp = session.query(RouterDevice).filter(RouterDevice.code < 100).order_by(
+        rd_tmp = session.query(RouterDevice).order_by(
             desc(RouterDevice.code)).first()
-        if rd_tmp is None:
+        max_code = 0
+        if rd_tmp is None or rd.code is None:
             max_code = 0
         else:
             max_code = rd.code
@@ -217,11 +217,9 @@ def add_router_device(rd: RouterDevice) -> RouterDevice:
         rd.code = max_code + 1
         rd.start_time = datetime.datetime.now()
         rd.status = 0
-        # ed.voltage = 0
-        # ed.hum_freq = 0
-        # ed.temp_freq = 0
-        # ed.name = 'test'
-        # ed.net_addr = '0000'
+        rd.name = 'test'
+        rd.voltage = 0
+
         session.add(rd)
         session.commit()
     except Exception as e:

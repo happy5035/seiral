@@ -17,8 +17,8 @@ import time
 import traceback
 import socketserver
 import mt_sys
-
 import dill as pickle
+import config
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xjtu'
@@ -357,7 +357,7 @@ class MsgSendDataThread(Thread):
 
 def serial_process():
     MsgProcessThread().start()
-    with serial.Serial('COM3', 38400) as ser:
+    with serial.Serial(config.serial_port, config.serial_rate) as ser:
         Thread(target=msg_handler, args=()).start()
         send_data = SerialSendData(ser)
         MsgSendDataThread(send_data).start()
@@ -416,8 +416,8 @@ def tcp_process():
     msg_process_thread = MsgProcessThread()
     msg_process_thread.setDaemon(True)
     msg_process_thread.start()
-    host = '192.168.11.254'
-    port = 8080
+    host = config.tcp_addr
+    port = config.tcp_port
     addr = (host, port)
     tcp_client = socket(AF_INET, SOCK_STREAM)
     tcp_client.connect(addr)
@@ -531,5 +531,7 @@ if __name__ == '__main__':
     setup_tcp_server()
     setup_param_server()
     setup_register_func_server()
-    serial_process()
-    # tcp_process()
+    if config.connect_type == 'serial':
+        serial_process()
+    else:
+        tcp_process()

@@ -274,7 +274,7 @@ def end_report_status_handler(msg):
 
 def router_report_status_handler(msg):
     data = msg.data
-    idx = 1
+    idx = 2
 
     net_addr = data[idx:idx + 2]
     idx += 2
