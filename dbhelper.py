@@ -244,28 +244,65 @@ def add_room_axis(axis: RoomAxis):
     pass
 
 
+def update_net_param(net_param: NetParams):
+    sess = DBSession()
+    try:
+        query = sess.query(NetParams)
+        rst = query.filter_by(net_param_id=1).first()
+        rst.remote_uart_addr = 1234
+        logger.info(rst)
+        sess.commit()
+    except Exception as e:
+        logger.error(e)
+        sess.rollback()
+        logger.warning('update router_device failed %s' % net_param)
+    sess.close()
+    pass
+
+
+def get_net_params(sess) -> NetParams:
+    rst = sess.query(NetParams).filter(NetParams.net_param_id == 1).first()
+    return rst
+
+def start_session():
+    return DBSession()
+
+def commit_session(sess):
+    try:
+        sess.commit()
+    except Exception as e:
+        logger.error(e)
+        sess.rollback()
+        logger.warning('commit failed')
+    sess.close()
+
+
 if __name__ == '__main__':
+    sess = start_session()
+    nt = get_net_params(sess)
+    nt.remote_uart_addr = 222
+    commit_session(sess)
     # eid = find_end_device_id('5c588b17004b1200')
     # session = DBSession()
     # rst = session.query(Room).first()
     # print(rst)
-    x = 7
-    y = 13
-    x_delt = 50
-    y_delt = 30
-    for xi in range(x):
-        for yi in range(y):
-            axis = RoomAxis()
-            axis.room_id = 1
-            axis.x_num = xi
-            axis.x_value = xi * x_delt
-            axis.y_num = yi
-            axis.y_value = yi * y_delt
-            axis.z_num = 0
-            axis.z_value = 0
-            add_room_axis(axis)
-            print(xi, yi)
-            pass
+    # x = 7
+    # y = 13
+    # x_delt = 50
+    # y_delt = 30
+    # for xi in range(x):
+    #     for yi in range(y):
+    #         axis = RoomAxis()
+    #         axis.room_id = 1
+    #         axis.x_num = xi
+    #         axis.x_value = xi * x_delt
+    #         axis.y_num = yi
+    #         axis.y_value = yi * y_delt
+    #         axis.z_num = 0
+    #         axis.z_value = 0
+    #         add_room_axis(axis)
+    #         print(xi, yi)
+    #         pass
 
     # add_end_device(EndDevice(ext_addr='1233333'))
     # import uuid

@@ -35,6 +35,7 @@ class EndDevice(Base):
                % (self.end_device_id, self.ext_addr, self.net_addr, self.name, self.voltage, self.status, self.hum_freq,
                   self.temp_freq, self.status)
 
+
 class RouterDevice(Base):
     __tablename__ = 'router_device'
     router_device_id = Column(String(255), primary_key=True)
@@ -122,7 +123,9 @@ class Room(Base):
     def __repr__(self):
         return "<Room (id = '%s', room_name = '%s',room_x = '%s',room_y= '%s'," \
                "room_x_nums= '%s',room_y_nums= '%s',room_z= '%s,room_size= '%s',room_pos= '%s')>" \
-               % (self.room_id, self.room_name, self.room_x, self.room_y,  self.room_x_nums, self.room_y_nums, self.room_z, self.room_size, self.room_pos)
+               % (
+               self.room_id, self.room_name, self.room_x, self.room_y, self.room_x_nums, self.room_y_nums, self.room_z,
+               self.room_size, self.room_pos)
 
 
 class RoomAxis(Base):
@@ -136,3 +139,23 @@ class RoomAxis(Base):
     z_num = Column(Integer)
     z_value = Column(Integer)
     note = Column(String(255))
+
+
+class NetParams(Base):
+    __tablename__ = 'net_param'
+    net_param_id = Column(Integer, primary_key=True)
+    panid = Column(String(4))
+    pv = Column(Integer)
+    chanel = Column(Integer)
+    temp_freq = Column(Integer)
+    hum_freq = Column(Integer)
+    packet_freq = Column(Integer)
+    clock_freq = Column(Integer)
+    remote_uart_addr = Column(Integer)
+    pv_flags = Column(Integer)
+
+    # def __repr__(self):
+    #     return "<NetParams (id='%s',panid='%s',pv='%s',chanel='%s',temp_freq='%s',hum_freq='%s',packet_freq='%s'" \
+    #            ",clock_freq='%s',remote_uart_addr='%s',pv_flags='%s' )> " \
+    #            % (self.net_param_id, self.panid, self.pv, self.chanel, self.temp_freq, self.hum_freq,
+    #               self.packet_freq, self.clock_freq, self.remote_uart_addr, self.pv_flags)

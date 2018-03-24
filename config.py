@@ -8,8 +8,8 @@ connect_type = connect_type_def[0]
 serial_port = 'COM3'
 serial_rate = 38400
 
-tcp_addr = 'localhost'
-tcp_port = '8080'
+tcp_addr = '192.168.16.100'
+tcp_port = 8080
 
 # sql connect
 sql_name = 'root'

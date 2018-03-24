@@ -330,6 +330,53 @@ def addr_info_handler(msg):
     pass
 
 
+def coor_report_nv_params_handler(msg):
+    _sess = start_session()
+    net_param = get_net_params(_sess)
+    data = msg.data
+    idx = 1
+    pv = data[idx:idx + 1]
+    logger.info('pv: %s' % bytes_to_int(pv))
+    net_param.pv = bytes_to_int(pv)
+    idx += 1
+    pv_flags = data[idx:idx + 4]
+    logger.info('pv flags: %s' % bytes_to_int(pv_flags))
+    net_param.pv_flags = bytes_to_int(pv_flags)
+    idx += 4
+    temp_sample_time = data[idx:idx + 4]
+    logger.info('temp sample time: %s' % bytes_to_int(temp_sample_time))
+    net_param.temp_freq = bytes_to_int(temp_sample_time)
+    idx += 4
+    hum_sample_time = data[idx:idx + 4]
+    logger.info('hum_sample_time: %s' % bytes_to_int(hum_sample_time))
+    net_param.hum_freq = bytes_to_int(hum_sample_time)
+    idx += 4
+    packet_time = data[idx:idx + 4]
+    logger.info('packet_time: %s' % bytes_to_int(packet_time))
+    net_param.packet_freq = bytes_to_int(packet_time)
+    idx += 4
+    sync_clock_time = data[idx:idx + 4]
+    logger.info('sync_clock_time: %s' % bytes_to_int(sync_clock_time))
+    net_param.clock_freq = bytes_to_int(sync_clock_time)
+    idx += 4
+    r_uart_addr = data[idx:idx + 2]
+    logger.info('remote_uart_addr: %s' % bytes_to_int(r_uart_addr))
+    net_param.remote_uart_addr = bytes_to_int(r_uart_addr)
+    idx += 2
+    time_window = data[idx:idx + 2]
+    logger.info('time_window: %s' % bytes_to_int(time_window))
+    net_param.time_window = bytes_to_int(time_window)
+    idx += 2
+    time_window_internal = data[idx:idx + 2]
+    logger.info('time_window_internal: %s' % bytes_to_int(time_window_internal))
+    net_param.time_window_internal = bytes_to_int(time_window_internal)
+    idx += 2
+
+    commit_session(_sess)
+
+    pass
+
+
 def mt_app_handler(msg):
     logger.debug('app handler')
     if len(msg.data):
@@ -352,6 +399,10 @@ def mt_app_handler(msg):
         if msg.data[0] == MASTER_GET_ADDR_COUNT_CMD:
             logger.warning("addr info")
             addr_info_handler(msg)
+            return
+        if msg.data[0] == COOR_REPORT_NV_PARAMS_CMD:
+            logger.warning("coor report nv params")
+            coor_report_nv_params_handler(msg)
             return
         if msg.data[0] == SUCCESS:
             logger.info('cmd success')

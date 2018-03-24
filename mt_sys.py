@@ -153,7 +153,15 @@ def app_msg_req(pv=0, items=[]):
     data.extend(item_data)
     return build_send_data(0x29, 0x00, len(data), data)
     pass
-
+def app_msg_net_param_update():
+    logger.info('get coor net params')
+    data = [0] * 2
+    idx = 0
+    data[idx] = GENERICAPP_ENDPOINT
+    idx += 1
+    data[idx] = MASTER_GET_NV_PARAMS_CMD
+    return build_send_data(0x29, 0x00, len(data), data)
+    pass
 
 def app_addr_info_req(user_type):
     data = [0] * 3
@@ -173,9 +181,9 @@ def send_cmd():
     # packet_freq = NvItem(1028, 4, 90000)
     # data = app_msg_req(pv=11, items=[temp_freq, packet_freq])
     # sock.send(bytes(data))
-    # data = sys_osal_nv_read_req(1281)
-    data = sys_ping_req()
-    print(data)
+    # data = sys_osal_nv_read_req(1025)
+    data = sys_reset_req(0)
+    # print(data)
     sock.send(bytes(data))
     sock.close()
 

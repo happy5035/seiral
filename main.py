@@ -479,6 +479,10 @@ class ThreadedParamRequestHandler(socketserver.BaseRequestHandler):
         serial_out_msg_queue.put({
             'data': msg_data
         })
+        msg_data = mt_sys.app_msg_net_param_update()
+        serial_out_msg_queue.put({
+            'data': msg_data
+        })
 
 
 class ThreadedTCPRegisterRequestHandler(socketserver.BaseRequestHandler):
